@@ -11,7 +11,7 @@ from DIRAC.RequestManagementSystem.Client.Request         import Request
 from DIRAC.RequestManagementSystem.private.RequestValidator   import gRequestValidator
 from ALDIRAC.Core.Utilities.FileUtilities                 import fullCopy
 
-import os, urllib, types, shutil, glob, sys, re
+import os, urllib, types, shutil, glob, sys
 
 class ModuleBase(object):
     '''
