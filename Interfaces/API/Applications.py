@@ -66,7 +66,7 @@ class SewLab(Application):
         if not self.Parameter:
             return S_ERROR("parameter not defined")
         
-        return S_OK()  
+        return S_OK()
       
       
         
