@@ -17,7 +17,7 @@ class SewLab(ModuleBase):
     def applicationSpecificInputs(self):
         """ Resolve the application specific inputs
         """
-        if not self.param:
+        if not self.parameter:
             return S_ERROR("Missing SewLab parameter")
         return S_OK()
     
