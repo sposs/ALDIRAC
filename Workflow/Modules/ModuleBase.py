@@ -178,7 +178,7 @@ class ModuleBase(object):
                     self.InputData = paramdata.split(";")
         
         if not self.OutputFile:
-            self.OutputFile = self.step_commonsget("OutputFile", "")
+            self.OutputFile = self.step_commons.get("OutputFile", "")
         
         #Next is also a module parameter, should be already set
         self.debug = self.step_commons.get('debug', False)

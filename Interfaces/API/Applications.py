@@ -33,7 +33,7 @@ class SewLab(Application):
     
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
-        m1.addParameter(Parameter("parameter",      "", "int", "", "", False, False, "Application parameter"))
+        m1.addParameter(Parameter("parameter",      0, "int", "", "", False, False, "Application parameter"))
         return m1
     
     def _applicationModuleValues(self, moduleinstance):
