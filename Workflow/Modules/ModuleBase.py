@@ -15,9 +15,8 @@ import os, urllib, types, shutil, glob, sys, re
 
 class ModuleBase(object):
     '''
-    classdocs
+    Base class for all the workflow modules.
     '''
-
 
     def __init__(self):
         '''
@@ -182,8 +181,6 @@ class ModuleBase(object):
         
         #Next is also a module parameter, should be already set
         self.debug = self.step_commons.get('debug', False)
-        
-              
 
         res = self.applicationSpecificInputs()
         if not res['OK']:
@@ -409,25 +406,10 @@ class ModuleBase(object):
         """
         sys.stdout.flush()
         if message:
-            if type(self.eventstring) == type(' '):
-                self.eventstring = [self.eventstring]
-            if len(self.eventstring): 
-                if len(self.eventstring[0]):
-                    for mystring in self.eventstring:
-                        if re.search(mystring, message):
-                            print message 
-        else:
             print message
         if self.applicationLog:
             log = open(self.applicationLog, 'a')
-            if self.excludeAllButEventString:
-                if len(self.eventstring): 
-                    if len(self.eventstring[0]):  
-                        for mystring in self.eventstring:
-                            if re.search(mystring, message):
-                                log.write(message+'\n')
-                else:
-                    log.write(message+'\n')
+            log.write(message+'\n')
             log.close()
         else:
             self.log.error("Application Log file not defined")

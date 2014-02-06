@@ -44,11 +44,7 @@ class Application(object):
         self.InputFile = ""
         #Output file
         self.OutputFile = ""
-        self.OutputPath = ""
-        self.OutputDstFile = ''
-        self.outputDstPath = ''
-        self.OutputRecFile = ''
-        self.outputRecPath = ''    
+        self.OutputPath = "" 
         self.OutputSE = ''
         self._listofoutput = []
         #Log file
@@ -161,7 +157,7 @@ class Application(object):
     def setSteeringFile(self, steeringfile):
         """ Set the steering file, and add it to sandbox
         
-        @param steeringfile: Steering file to use. Can be any type: whizard.in, mokka.steer, slic.mac, marlin.xml, lcsim.lcsim, etc.
+        @param steeringfile: Steering file to use. 
         @type steeringfile: string
         """
         self._checkArgs({ 'steeringfile' : types.StringTypes } )
@@ -216,7 +212,7 @@ class Application(object):
         return S_OK()
     
     def setInputFile(self, inputfile):
-        """ Set the input file to use: stdhep, slcio, root, whatever
+        """ Set the input file to use
         
         @param inputfile: Input file (data, not steering) to pass to the application. Can be local file of LFN:
         @type inputfile: string or list
@@ -237,9 +233,9 @@ class Application(object):
     def getInputFromApp(self, application):
         """ Called to link applications
         
-        >>> mokka = Mokka()
-        >>> marlin = Marlin()
-        >>> marlin.getInputFromApp(mokka)
+        >>> first_app = MyApp()
+        >>> second_app = MyOtherApp()
+        >>> second_app.getInputFromApp(first_app)
         
         @param application: Application to link against.
         @type application: application
