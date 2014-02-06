@@ -13,11 +13,11 @@ class SewLab(Application):
     '''
     classdocs
     '''
-    def __init__(self, params):
+    def __init__(self):
         '''
         Constructor
         '''
-        self.param = 0
+        self.Parameter = 0
         super(SewLab, self).__init__()
         self._modulename = "SewLab"
         self.appname = self._modulename
@@ -26,14 +26,14 @@ class SewLab(Application):
     def setParameter(self, param):
         """ Set a parameter
         """
-        self._checkArgs( {'param' : types.StringTypes })
+        self._checkArgs( {'param' : types.IntType })
 
-        self.Paramater = param
+        self.Parameter = param
         return S_OK()
+    
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
         m1.addParameter(Parameter("parameter",      "", "int", "", "", False, False, "Application parameter"))
-
         return m1
     
     def _applicationModuleValues(self, moduleinstance):
