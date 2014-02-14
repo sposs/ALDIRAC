@@ -33,7 +33,7 @@ class ModuleBase(object):
         self.applicationLog = ''
         self.applicationVersion = ''
         self.applicationName = ''
-        self.InputData = [] #Will have to become empty list
+        self.InputData = []  #Will have to become empty list
         self.SteeringFile = ''
         self.energy = 0
         self.parametricParameters = ""
@@ -75,7 +75,7 @@ class ModuleBase(object):
         if not self.jobID:
             return S_OK('JobID not defined') # e.g. running locally prior to submission
     
-        self.log.verbose('setJobApplicationStatus(%s,%s)' %(self.jobID, status))
+        self.log.verbose('setJobApplicationStatus(%s,%s)' % (self.jobID, status))
     
         if self.workflow_commons.has_key('JobReport'):#this should ALWAYS be true
             self.jobReport  = self.workflow_commons['JobReport']
