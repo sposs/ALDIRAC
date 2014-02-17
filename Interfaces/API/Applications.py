@@ -149,28 +149,40 @@ class SewLab(Application):
         '''
         Constructor
         '''
-        self.Parameter = 0
+        self.Efield = 0.0
+        self.options = ""
         super(SewLab, self).__init__()
         self._modulename = "SewLab"
         self.appname = self._modulename
         self._moduledescription = 'The sewlab wrapper'
 
-    def setParameter(self, param):
+    def setEfield(self, param):
         """ Set a parameter
         """
-        self._checkArgs({'param': types.IntType})
-
-        self.Parameter = param
+        self._checkArgs({'param': types.FloatType})
+        self.Efield = param
         return S_OK()
+
+    def setSelfTransportOptions(self, optionlist):
+        """ Set the Selftransport options
+        """
+        if not type(optionlist) == types.ListType:
+            optionlist = [optionlist]
+        self._checkArgs({'optionlist': types.ListType})
+
+        self.options = ";".join(optionlist)
 
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
-        m1.addParameter(Parameter("parameter", 0, "int", "", "", False,
-                                  False, "Application parameter"))
+        m1.addParameter(Parameter("efield", 0.0, "float", "", "", False,
+                                  False, "E field"))
+        m1.addParameter(Parameter("options", "", "string", "", "", False,
+                                  False, "Selftransport options"))
         return m1
 
     def _applicationModuleValues(self, moduleinstance):
-        moduleinstance.setValue("parameter",    self.Parameter)
+        moduleinstance.setValue("efield",    self.Efield)
+        moduleinstance.setValue("options",   self.options)
 
     def _userjobmodules(self, stepdefinition):
         res1 = self._setApplicationModuleAndParameters(stepdefinition)
@@ -196,7 +208,7 @@ class SewLab(Application):
     def _checkConsistency(self):
         """ Checks that script and dependencies are set.
         """
-        if not self.Parameter:
-            return S_ERROR("parameter not defined")
+        if not self.Efield:
+            return S_ERROR("E field not defined")
 
         return S_OK()
