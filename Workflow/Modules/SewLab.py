@@ -6,8 +6,9 @@ Created on Feb 6, 2014
 from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC import S_OK, S_ERROR, gLogger
 from DIRAC.Core.Utilities.Subprocess                      import shellCall
-
+from ALDIRAC.Core.Utilities.SewlabparamsParser import sewlab_xml_parser
 import os
+import shutil
 
 
 class SewLab(ModuleBase):
@@ -16,21 +17,78 @@ class SewLab(ModuleBase):
         ModuleBase.__init__(self)
         self.efield = 0.0
         self.options = ""
+        self.scriptfile = ""
+        self.samplefile = ""
         self.log = gLogger.getSubLogger("SewLab")
         self.InputFile = []
         self.SteeringFile = ''
-
+        self.sequence = ""
+        self.sequencetype = ""
+        self.parameterchanges = {}
+        self.alteredparams = ""
+        self.xray = 1.0
+        self.parametricvar = ""
+        self.varyefield = False
+        
     def applicationSpecificInputs(self):
         """ Resolve the application specific inputs
         """
         if not self.OutputFile:
             self.OutputFile = "solution_%s.slo" % self.jobID
-        if not self.Efield:
+        if not self.Efield and not self.varyefield:
             return S_ERROR("Missing E field")
+        if self.varyefield:
+            self.Efield = self.parametricParameters
         if self.options:
             self.options = self.options.replace(";", " ")
-        return S_OK()
+        if self.sequence:
+            if self.sequence.count(";"):
+                self.sequence = self.sequence.split(";")
+                self.sequencetype = "list"
+            else:
+                self.sequence = os.path.basename(self.sequence)
+                self.sequencetype = "file"
+                
+        if self.alteredparams:
+            params = self.alteredparams.rstrip(";").split(";")
+            for param in params:
+                key, value  = param.split("=")
+                self.parameterchanges[key.strip()] = value.strip()
+        if self.parametricvar:
+            self.parameterchanges[self.parametricvar] = self.parametricParameters
+            
+        if self.samplefile:
+            self.samplefile = os.path.basename(self.samplefile)
 
+        return S_OK()
+    
+    def applicationSpecificMoveBefore(self):
+        """ Copy the sample file
+        """
+        if not self.samplefile:
+            return S_OK()
+        
+        if self.samplefile:
+            if os.path.join(self.basedirectory, self.samplefile):
+                try:
+                    shutil.copy(os.path.join(self.basedirectory, self.samplefile), 
+                                os.path.join (".", self.samplefile))
+                except OSError:
+                    return S_ERROR("Couldn't copy the sample file %s" % self.samplefile)
+        else:
+            return S_ERROR("Missing sample file")
+        
+        if self.sequencetype == "file":
+            if os.path.exists(os.path.join(self.basedirectory, self.sequence)):
+                try:
+                    shutil.copy(os.path.join(self.basedirectory, self.sequence), 
+                                os.path.join(".", self.sequence))
+                except OSError:
+                    return S_ERROR("Failed copying the sequence file")
+            else:
+                return S_ERROR("Couldn't find the sequence file %s" % self.sequence)
+        return S_OK()
+    
     def runIt(self):
         """ Now do something
         """
@@ -48,6 +106,7 @@ class SewLab(ModuleBase):
 
         self.log.info("The Sewlab parameter is %s" % self.parameter)
         
+
         res = self._makeSample()
         if not res['OK']:
             self.log.error("Failed to create the sample file")
@@ -62,7 +121,7 @@ class SewLab(ModuleBase):
         res = self._path()
         if not res["OK"]:
             self.log.error("Failed to locate the sewlab executable")
-            self.setApplicationStatus("Failed finind sewlab", True)
+            self.setApplicationStatus("Failed finding sewlab", True)
             return res 
         sewlab_path = res['Value']
         
@@ -112,15 +171,37 @@ class SewLab(ModuleBase):
     def _makeSample(self):
         """ Create the Sample file
         """
-        with open("local.sample", 'w') as sample:
-            sample.write("")
+        if self.SteeringFile:
+            if not os.path.exists(self.SteeringFile):
+                self.log.error("Missing sample file")
+            try:
+                pp = sewlab_xml_parser(self.SteeringFile)
+                if self.parameterchanges:
+                    for param, value in self.parameterchanges:
+                        pp.set_param(param, value)
+                pp.render_cfg("local.sample")
+            except:
+                self.log.error("Failed to parse the XML sample file")
+                return S_ERROR("Failed to parse the XML file")
+        else:
+            with open("local.sample", 'w') as sample:
+                sample.write("")
+        if self.sequencetype == "list":
+            with open("local.sample", "a") as seq:
+                seq.write("sequence {\n")
+                seq.write('  label = "diracsequence";\n')
+                seq.write("  xray = %s;\n" % self.xray)
+                for item in self.sequence:
+                    seq.write("  layer { %s }\n" % item)
+                    seq.write("}\n")
+        
         return S_OK()
     
     def _makeScript(self):
         """ Make the execution script
         """
         with open("exec.script", "w") as script:
-            script.write("""mqw = (Load Sequence From "local.sample" At "sequence");
+            script.write("""mqw = (Load Sequence From "local.sample" At "diracsequence");
 params = (Load Tree From "local.sample");
 
 // Variables
