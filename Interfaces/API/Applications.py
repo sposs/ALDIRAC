@@ -155,11 +155,11 @@ class Sewlab(Application):
         self.SelfTransportOptions = ""
         self.ScriptFile = ""
         self.SampleFile = ""
-        self._sequencetype = ""
         self.Sequence = ""
         self.AlteredParameters = ""
         self.ParametricVariationOn = ""
         super(Sewlab, self).__init__()
+        self._sequencetype = ""
         self._modulename = "SewLab"
         self.appname = self._modulename
         self._moduledescription = 'The sewlab wrapper'
@@ -247,7 +247,7 @@ class Sewlab(Application):
                 self.Sequence = sequence
         else:
             self._sequencetype = "text"
-            self.Sequence = ";;;".join(sequence)
+            self.Sequence = " ;;; ".join(sequence)
             
     def setXray(self, value):
         """ Set the xray

@@ -9,7 +9,7 @@ from DIRAC.Core.Utilities.Subprocess                      import shellCall
 from ALDIRAC.Core.Utilities.SewlabparamsParser import sewlab_xml_parser
 import os
 import shutil
-
+from math import fabs
 
 class SewLab(ModuleBase):
     def __init__(self):
@@ -200,12 +200,16 @@ class SewLab(ModuleBase):
     def _makeScript(self):
         """ Make the execution script
         """
+        if self.efield <0:
+            sign = "-"
+        else:
+            sign = ""
         with open("exec.script", "w") as script:
             script.write("""mqw = (Load Sequence From "local.sample" At "diracsequence");
 params = (Load Tree From "local.sample");
 
 // Variables
-efield = %(efield)f;
+efield = (%(sign)s %(efield)f );
 
 // Potential And Self Basis
 pot = (Buildpot mqw Using params);
@@ -214,7 +218,7 @@ bpot = (Bias pot To efield);
 sol = (Selftransport bpot Using params %(options)s);
 
 Save sol "%(outputfile)s" 
-""" % {"efield": self.efield, "options": self.options, "outputfile": self.OutputFile})
+""" % {"sign": sign, "efield": fabs(self.efield), "options": self.options, "outputfile": self.OutputFile})
         return S_OK()
     
     def _path(self):
