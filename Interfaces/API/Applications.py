@@ -141,7 +141,7 @@ on disk")
 #######################################################################
 ### Below is the really relevant stuff
 ######################################
-class SewLab(Application):
+class Sewlab(Application):
     '''
     classdocs
     '''
@@ -150,6 +150,7 @@ class SewLab(Application):
         Constructor
         '''
         self.Efield = 0.0
+        self.VaryEField = False
         self.Xray = 1.0
         self.SelfTransportOptions = ""
         self.ScriptFile = ""
@@ -158,7 +159,7 @@ class SewLab(Application):
         self.Sequence = ""
         self.AlteredParameters = ""
         self.ParametricVariationOn = ""
-        super(SewLab, self).__init__()
+        super(Sewlab, self).__init__()
         self._modulename = "SewLab"
         self.appname = self._modulename
         self._moduledescription = 'The sewlab wrapper'
@@ -246,7 +247,7 @@ class SewLab(Application):
                 self.Sequence = sequence
         else:
             self._sequencetype = "text"
-            self.Sequence = ";".join(sequence)
+            self.Sequence = ";;;".join(sequence)
             
     def setXray(self, value):
         """ Set the xray
@@ -317,6 +318,9 @@ class SewLab(Application):
             if self.ScriptFile:
                 if not self.SampleFile:
                     return S_ERROR("Missing what Sewlab should do")
+            elif self.SampleFile:
+                #do nothing
+                pass
             else:
                 return S_ERROR("Missing what Sewlab should do")
         if self.SampleFile:

@@ -35,20 +35,21 @@ class SewLab(ModuleBase):
         """
         if not self.OutputFile:
             self.OutputFile = "solution_%s.slo" % self.jobID
-        if not self.Efield and not self.varyefield:
+        if not self.efield and not self.varyefield:
             return S_ERROR("Missing E field")
         if self.varyefield:
             self.Efield = self.parametricParameters
         if self.options:
             self.options = self.options.replace(";", " ")
         if self.sequence:
-            if self.sequence.count(";"):
-                self.sequence = self.sequence.split(";")
+            if self.sequence.count(";;;"):
+                self.sequence = self.sequence.split(";;;")
                 self.sequencetype = "list"
+                self.log.verbose("Sequence is a list")
             else:
                 self.sequence = os.path.basename(self.sequence)
                 self.sequencetype = "file"
-                
+                self.log.verbose("Sequence is a file")
         if self.alteredparams:
             params = self.alteredparams.rstrip(";").split(";")
             for param in params:
@@ -102,10 +103,7 @@ class SewLab(ModuleBase):
 
         if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
             self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
-            return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
-
-        self.log.info("The Sewlab parameter is %s" % self.parameter)
-        
+            return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)        
 
         res = self._makeSample()
         if not res['OK']:
@@ -128,6 +126,7 @@ class SewLab(ModuleBase):
         scriptName = '%s_%s_Run_%s.sh' % (self.applicationName, self.applicationVersion, self.STEP_NUMBER)
         with open(scriptName, "w") as script:
             script.write("#!/bin/bash\n")
+            script.write("declare -x LD_LIBRARY_PATH=/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH\n")
             script.write("%s exec.script\n" % sewlab_path)
             script.write("exit $?\n")
         os.chmod(scriptName, 0755)
@@ -183,9 +182,10 @@ class SewLab(ModuleBase):
             except:
                 self.log.error("Failed to parse the XML sample file")
                 return S_ERROR("Failed to parse the XML file")
-        else:
+        elif self.samplefile:
+            content = open(self.samplefile, "r").readlines()
             with open("local.sample", 'w') as sample:
-                sample.write("")
+                sample.write("".join(content))
         if self.sequencetype == "list":
             with open("local.sample", "a") as seq:
                 seq.write("sequence {\n")
@@ -193,7 +193,7 @@ class SewLab(ModuleBase):
                 seq.write("  xray = %s;\n" % self.xray)
                 for item in self.sequence:
                     seq.write("  layer { %s }\n" % item)
-                    seq.write("}\n")
+                seq.write("}\n")
         
         return S_OK()
     
@@ -205,13 +205,13 @@ class SewLab(ModuleBase):
 params = (Load Tree From "local.sample");
 
 // Variables
-efield = %(efield);
+efield = %(efield)f;
 
 // Potential And Self Basis
 pot = (Buildpot mqw Using params);
 bpot = (Bias pot To efield);
 
-sol = (Selftransport bpot Using params %(options));
+sol = (Selftransport bpot Using params %(options)s);
 
 Save sol "%(outputfile)s" 
 """ % {"efield": self.efield, "options": self.options, "outputfile": self.OutputFile})
