@@ -149,10 +149,6 @@ class Sewlab(Application):
         '''
         Constructor
         '''
-        self.SelfTransportOptions = ""
-        self.ScriptFile = ""
-        self.SampleFile = ""
-        self.Sequence = ""
         self.AlteredParameters = ""
         self.ParametricVariationOn = ""
         super(Sewlab, self).__init__()
