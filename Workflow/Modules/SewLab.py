@@ -8,15 +8,14 @@ from DIRAC import S_OK, S_ERROR, gLogger
 from DIRAC.Core.Utilities.Subprocess                      import shellCall
 from ALDIRAC.Core.Utilities.SewlabparamsParser import sewlab_xml_parser
 import os
-import shutil
-from math import fabs
+
+from xml.etree import ElementTree
+from xml.etree.ElementTree import SubElement
 
 class SewLab(ModuleBase):
     def __init__(self):
         super(SewLab, self).__init__()
         ModuleBase.__init__(self)
-        self.efield = 0.0
-        self.options = ""
         self.scriptfile = ""
         self.samplefile = ""
         self.log = gLogger.getSubLogger("SewLab")
@@ -26,30 +25,14 @@ class SewLab(ModuleBase):
         self.sequencetype = ""
         self.parameterchanges = {}
         self.alteredparams = ""
-        self.xray = 1.0
         self.parametricvar = ""
-        self.varyefield = False
         
     def applicationSpecificInputs(self):
         """ Resolve the application specific inputs
         """
         if not self.OutputFile:
             self.OutputFile = "solution_%s.slo" % self.jobID
-        if not self.efield and not self.varyefield:
-            return S_ERROR("Missing E field")
-        if self.varyefield:
-            self.Efield = self.parametricParameters
-        if self.options:
-            self.options = self.options.replace(";", " ")
-        if self.sequence:
-            if self.sequence.count(";;;"):
-                self.sequence = self.sequence.split(";;;")
-                self.sequencetype = "list"
-                self.log.verbose("Sequence is a list")
-            else:
-                self.sequence = os.path.basename(self.sequence)
-                self.sequencetype = "file"
-                self.log.verbose("Sequence is a file")
+        self.parameterchanges["outputfile"] = self.OutputFile
         if self.alteredparams:
             params = self.alteredparams.rstrip(";").split(";")
             for param in params:
@@ -57,37 +40,7 @@ class SewLab(ModuleBase):
                 self.parameterchanges[key.strip()] = value.strip()
         if self.parametricvar:
             self.parameterchanges[self.parametricvar] = self.parametricParameters
-            
-        if self.samplefile:
-            self.samplefile = os.path.basename(self.samplefile)
 
-        return S_OK()
-    
-    def applicationSpecificMoveBefore(self):
-        """ Copy the sample file
-        """
-        if not self.samplefile:
-            return S_OK()
-        
-        if self.samplefile:
-            if os.path.join(self.basedirectory, self.samplefile):
-                try:
-                    shutil.copy(os.path.join(self.basedirectory, self.samplefile), 
-                                os.path.join (".", self.samplefile))
-                except OSError:
-                    return S_ERROR("Couldn't copy the sample file %s" % self.samplefile)
-        else:
-            return S_ERROR("Missing sample file")
-        
-        if self.sequencetype == "file":
-            if os.path.exists(os.path.join(self.basedirectory, self.sequence)):
-                try:
-                    shutil.copy(os.path.join(self.basedirectory, self.sequence), 
-                                os.path.join(".", self.sequence))
-                except OSError:
-                    return S_ERROR("Failed copying the sequence file")
-            else:
-                return S_ERROR("Couldn't find the sequence file %s" % self.sequence)
         return S_OK()
     
     def runIt(self):
@@ -105,15 +58,10 @@ class SewLab(ModuleBase):
             self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
             return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)        
 
-        res = self._makeSample()
+        res = self._altersample()
         if not res['OK']:
-            self.log.error("Failed to create the sample file")
-            self.setApplicationStatus("Failed to create the sample file", True)
-            return res
-        res = self._makeScript()
-        if not res["OK"]:
-            self.log.error("Failed to create the script")
-            self.setApplicationStatus("Failed creating the script", True)
+            self.log.error("Failed to change the file")
+            self.setApplicationStatus("Failed to change the file", True)
             return res
         
         res = self._path()
@@ -121,13 +69,14 @@ class SewLab(ModuleBase):
             self.log.error("Failed to locate the sewlab executable")
             self.setApplicationStatus("Failed finding sewlab", True)
             return res 
-        sewlab_path = res['Value']
-        
+        sewlab_path, fin_path = res['Value']
+       
+        extra_opts = "-o /Setup=Prod -o /Prod/SewlabPath=%s" % fin_path
         scriptName = '%s_%s_Run_%s.sh' % (self.applicationName, self.applicationVersion, self.STEP_NUMBER)
         with open(scriptName, "w") as script:
             script.write("#!/bin/bash\n")
             script.write("declare -x LD_LIBRARY_PATH=/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH\n")
-            script.write("%s exec.script\n" % sewlab_path)
+            script.write("%s -i %s %s\n" % (sewlab_path, self.SteeringFile, extra_opts))
             script.write("exit $?\n")
         os.chmod(scriptName, 0755)
         
@@ -167,72 +116,74 @@ class SewLab(ModuleBase):
                                                self.applicationName, self.applicationVersion))
 
     
-    def _makeSample(self):
+    def _altersample(self):
         """ Create the Sample file
         """
         if self.SteeringFile:
             if not os.path.exists(self.SteeringFile):
-                self.log.error("Missing sample file")
+                self.log.error("Missing input file")
+                return S_ERROR("Missing input file")
             try:
                 pp = sewlab_xml_parser(self.SteeringFile)
+                xml_repr = pp.dumpxml()
                 if self.parameterchanges:
-                    for param, value in self.parameterchanges:
-                        pp.set_param(param, value)
-                pp.render_cfg("local.sample")
-            except:
-                self.log.error("Failed to parse the XML sample file")
+                    for param, value in self.parameterchanges.items():
+                        if pp.set_param(param, value):
+                            del self.parameterchanges[param]
+                    xml_repr = pp.dumpxml()
+                tree = ElementTree.parse(self.SteeringFile)
+                seq = tree.getroot().find("SewLabSequence")
+                seq = self.alter_xml(seq, self.parameterchanges)
+                xml_repr.append(seq)
+                script = SubElement(xml_repr, "SewLabScript")
+                script_elems = tree.getroot().findall("SewLabScript/SewLabScriptParam")
+                for elem in script_elems:
+                    altered_elem = self.alter_xml(elem, self.parameterchanges)
+                    script.append(altered_elem)
+                for param, value in self.parameterchanges.items(): #all remaining elements are added as script parameters
+                    SubElement(script, "SewLabScriptParam", {"name": param, "value": value, "type": type(value).__name__})
+                final_tree = ElementTree.ElementTree(xml_repr)
+                final_tree.write(self.SteeringFile)
+            except Exception as error:
+                self.log.error("Failed to parse the XML file:", str(error))
+                raise
                 return S_ERROR("Failed to parse the XML file")
-        elif self.samplefile:
-            content = open(self.samplefile, "r").readlines()
-            with open("local.sample", 'w') as sample:
-                sample.write("".join(content))
-        if self.sequencetype == "list":
-            with open("local.sample", "a") as seq:
-                seq.write("sequence {\n")
-                seq.write('  label = "diracsequence";\n')
-                seq.write("  xray = %s;\n" % self.xray)
-                for item in self.sequence:
-                    seq.write("  layer { %s }\n" % item)
-                seq.write("}\n")
         
-        return S_OK()
-    
-    def _makeScript(self):
-        """ Make the execution script
-        """
-        if self.efield <0:
-            sign = "-"
-        else:
-            sign = ""
-        with open("exec.script", "w") as script:
-            script.write("""mqw = (Load Sequence From "local.sample" At "diracsequence");
-params = (Load Tree From "local.sample");
-
-// Variables
-efield = (%(sign)s %(efield)f );
-
-// Potential And Self Basis
-pot = (Buildpot mqw Using params);
-bpot = (Bias pot To efield);
-
-sol = (Selftransport bpot Using params %(options)s);
-
-Save sol "%(outputfile)s" 
-""" % {"sign": sign, "efield": fabs(self.efield), "options": self.options, "outputfile": self.OutputFile})
         return S_OK()
     
     def _path(self):
         """ Try to locate sewlab_mono
         """
-        bin_name = self.ops.getValue("SewLab/BinName", "sewlab_mono")
-        path = self.ops.getValue("SewLab/EC2Path", "/home/ec2-user/")
+        bin_name = self.ops.getValue("SewLab/ALBinName", "al_sewlabwrapper")
+        path = self.ops.getValue("SewLab/EC2realPath", "/home/ec2-user/")
+        real_bin_name = self.ops.getValue("SewLab/BinName", "sewlab_mono")
+        real_bin_path = self.ops.getValue("SewLab/EC2Path", "/home/ec2-user/")
+        real_path = os.path.join(real_bin_path, real_bin_name)
+        if not os.path.exists(real_path):
+            self.log.error("Couldn't find the sewlab binary:", real_path)
+            return S_ERROR("Missing sewlab binary")
+        
         f_path = os.path.join(path,bin_name)
-        if os.path.exists(f_path):
-            return S_OK(f_path)
+        if os.path.exists(f_path) and os.path.exists(real_path):
+            return S_OK((f_path, real_path))
+        
         shared_area = self.ops.getValue("SharedArea", "/common/exe")
         f_path = os.path.join(shared_area, bin_name)
-        if os.path.exists(f_path):
-            return S_OK(f_path)
+        if os.path.exists(f_path) and os.path.exists(real_path):
+            return S_OK((f_path, real_path))
         
         return S_ERROR("Failed to find sewlab binary")
+    
+    def alter_xml(self, input_element, params_dict):
+        """ Change values
+        """
+        for param, value in params_dict.items():
+            if input_element.get("name", None) == param:
+                ptype = input_element.get("type", None)
+                if ptype:
+                    value = eval("%s(%s)" % (ptype, value))
+                input_element.attrib["value"] = value
+                del params_dict[param]
+        return input_element
+
     
