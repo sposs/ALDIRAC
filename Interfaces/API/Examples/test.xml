@@ -1,0 +1,332 @@
+<SewLabParams>
+<SewLabParamTextBlock name="materials">materials {
+    bulk {
+        alias            = InAs;
+        mass            = 0.027;
+        epsilon-inf        = 12.25;    // not used
+        epsilon-zero    = 15.15;
+        hLO                = 12.0;        // not used
+        hTO                = 12.0;        // not used
+        direct-gap        = 0.356;        // obsolete
+        lattice-const    = 6.0583;
+    }
+    bulk {
+        alias            = GaAs;
+        mass            = 0.067;
+        epsilon-inf     = 10.92;    // not used
+        epsilon-zero    = 12.68;
+        hLO                = 0.0361;    // not used
+        hTO                = 0.0335;    // not used
+        direct-gap        = 1.16053;    // not used
+        lattice-const    = 5.65;
+    }
+    bulk {
+        alias            = AlAs;
+        mass            = 0.15;
+        epsilon-inf     = 8.16;        // not used
+        epsilon-zero    = 10.14;
+        hLO                = 0.0496;    // not used
+        hTO                = 0.0445;    // not used
+        direct-gap        = 2.5982;    // not used
+        lattice-const    = 5.66;
+    }
+    alloy {
+        alias = GaInAs;
+        zero-fraction = InAs;
+        full-fraction = GaAs;
+    }
+    alloy {
+        alias = AlInAs;
+        zero-fraction = InAs;
+        full-fraction = AlAs;
+    }
+    interface {
+        left-material = GaAs;
+        right-material = AlAs;
+        discontinuity = 0.9;
+    }
+    interface {
+        left-material = InAs;
+        right-material = AlAs;
+        discontinuity = 1.4;
+    }
+    interface {
+        left-material = InAs;
+        right-material = GaAs;
+        discontinuity = 0.6;
+    }
+}
+</SewLabParamTextBlock>
+<SewLabParamBlock name="buildpot-params">
+  <SewLabParam deprecated="False" name="bulk_step" state="True" type="int" value="1" />
+  <SewLabParam deprecated="False" name="interface_step" state="True" type="float" value="0.01" />
+  <SewLabParam deprecated="False" name="interface_diffusion" state="True" type="float" value="0.0" />
+  <SewLabParam deprecated="False" name="mesh_style" state="True" type="str" value="fixed-step" />
+  <SewLabParam deprecated="False" name="phony_left_barrier" state="True" type="str" value="NO" />
+  <SewLabParamBlock name="left-barrier">
+    <SewLabParam deprecated="False" name="thickness" state="True" type="float" value="350.0" />
+    <SewLabParam deprecated="False" name="material" state="True" type="str" value="AlGaAs" />
+    <SewLabParam deprecated="False" name="label" state="True" type="str" value="&quot;left barrier&quot;" />
+    <SewLabParam deprecated="False" name="x" state="False" type="float" value="0.15" />
+    <SewLabParam deprecated="False" name="gap" state="False" type="float" value="0.1" />
+  </SewLabParamBlock>
+  <SewLabParam deprecated="False" name="phony_right_barrier" state="True" type="str" value="AUTO" />
+  <SewLabParamBlock name="right-barrier">
+    <SewLabParam deprecated="False" name="thickness" state="True" type="int" value="35" />
+    <SewLabParam deprecated="False" name="material" state="True" type="str" value="AlGaAs" />
+    <SewLabParam deprecated="False" name="label" state="True" type="str" value="&quot;right barrier&quot;" />
+    <SewLabParam deprecated="False" name="x" state="False" type="float" value="0.15" />
+  </SewLabParamBlock>
+  <SewLabParam deprecated="False" name="has_box_wall" state="True" type="bool" value="True" />
+  <SewLabParam deprecated="False" name="auto_box_wall" state="True" type="bool" value="True" />
+  <SewLabParamBlock name="box-wall-layer">
+    <SewLabParam deprecated="False" name="thickness" state="True" type="float" value="2.0" />
+    <SewLabParam deprecated="False" name="material" state="True" type="str" value="AlAs" />
+    <SewLabParam deprecated="False" name="label" state="True" type="str" value="&quot;box layer&quot;" />
+  </SewLabParamBlock>
+</SewLabParamBlock>
+<SewLabParamBlock name="solver">
+  <SewLabParam deprecated="False" name="emin" state="True" type="float" value="0.001" />
+  <SewLabParam deprecated="False" name="emax" state="True" type="float" value="1.6" />
+  <SewLabParam deprecated="False" name="up_to_bound_state" state="True" type="int" value="20" />
+  <SewLabParam deprecated="False" name="continuum_emin" state="True" type="float" value="0.001" />
+  <SewLabParam deprecated="False" name="continuum_emax" state="True" type="float" value="2.0" />
+  <SewLabParam deprecated="False" name="initial_samples" state="True" type="int" value="1200" />
+  <SewLabParam deprecated="False" name="np" state="True" type="bool" value="True" />
+  <SewLabParam deprecated="False" name="energy_precision" state="True" type="float" value="1e-12" />
+  <SewLabParam deprecated="False" name="max_divergence" state="True" type="float" value="0.0001" />
+  <SewLabParam deprecated="False" name="max_iterations" state="True" type="int" value="1000" />
+  <SewLabParam deprecated="False" name="boundify" state="True" type="bool" value="True" />
+  <SewLabParam deprecated="False" name="adjust_box_wall" state="True" type="bool" value="True" />
+  <SewLabParam deprecated="False" name="wf_resampling" state="True" type="bool" value="True" />
+  <SewLabParam deprecated="False" name="wf_step" state="True" type="float" value="1.0" />
+  <SewLabParam deprecated="False" name="up_to_continuum_state" state="True" type="int" value="200" />
+</SewLabParamBlock>
+<SewLabParamBlock name="absorption">
+  <SewLabParam deprecated="False" name="min_photon_energy" state="True" type="float" value="1e-05" />
+  <SewLabParam deprecated="False" name="max_photon_energy" state="True" type="float" value="0.5" />
+  <SewLabParam deprecated="False" name="spectrum_sampling" state="True" type="int" value="512" />
+  <SewLabParam deprecated="False" name="k_space_sampling" state="True" type="int" value="64" />
+  <SewLabParam deprecated="False" name="number_of_kT_before_cut_off" state="True" type="int" value="7" />
+  <SewLabParam deprecated="False" name="use_non_parabolicity" state="True" type="bool" value="True" />
+  <SewLabParam deprecated="False" name="default_subband_broadening" state="True" type="float" value="0.004" />
+  <SewLabParam deprecated="False" name="modal_index" state="True" type="float" value="3.2" />
+  <SewLabParam deprecated="False" name="modal_overlap" state="True" type="float" value="1.0" />
+</SewLabParamBlock>
+<SewLabParamBlock name="ifr">
+  <SewLabParam deprecated="False" name="angular_sampling" state="True" type="int" value="32" />
+</SewLabParamBlock>
+<SewLabParamBlock name="hlo">
+  <SewLabParam deprecated="False" name="level_of_details" state="True" type="int" value="8" />
+  <SewLabParam deprecated="False" name="angular_sampling" state="True" type="int" value="32" />
+  <SewLabParam deprecated="False" name="kp0" state="True" type="float" value="64" />
+  <SewLabParam deprecated="False" name="exp_cutoff" state="True" type="float" value="1e-06" />
+</SewLabParamBlock>
+<SewLabParamBlock name="alloy-disorder">
+  <SewLabParam deprecated="False" name="angular_sampling" state="True" type="int" value="32" />
+</SewLabParamBlock>
+<SewLabParamBlock name="impurities">
+  <SewLabParam deprecated="False" name="angular_sampling" state="True" type="int" value="32" />
+  <SewLabParam deprecated="False" name="formfactor_lod" state="True" type="int" value="8" />
+  <SewLabParam deprecated="False" name="exp_cutoff" state="True" type="float" value="1e-06" />
+  <SewLabParam deprecated="False" name="crop_profile" state="True" type="bool" value="True" />
+  <SewLabParam deprecated="False" name="zero_trigger" state="True" type="float" value="0.0" />
+  <SewLabParam deprecated="False" name="wf_step" state="True" type="float" value="3.0" />
+</SewLabParamBlock>
+<SewLabParamBlock name="transport">
+  <SewLabParam deprecated="True" name="taup_sorting " state="False" type="float" value="0.08" />
+  <SewLabParam deprecated="True" name="tunneltime_max" state="False" type="int" value="100" />
+  <SewLabParam deprecated="True" name="tunneltime_maxstates" state="False" type="int" value="10" />
+  <SewLabParam deprecated="False" name="initial_temperature" state="True" type="float" value="1500.0" />
+  <SewLabParam deprecated="False" name="k_space_sampling" state="True" type="int" value="256" />
+  <SewLabParam deprecated="False" name="number_of_kT_before_cut_off" state="True" type="int" value="7" />
+  <SewLabParam deprecated="False" name="hlo_energy" state="True" type="float" value="0.034" />
+  <SewLabParam deprecated="False" name="hlo_temperature" state="True" type="float" value="300.0" />
+  <SewLabParam deprecated="False" name="hlo_qscreen" state="True" type="float" value="0.0" />
+  <SewLabParam deprecated="False" name="ifr_inplane_corr" state="True" type="int" value="90" />
+  <SewLabParam deprecated="False" name="ifr_vertical_corr" state="True" type="float" value="15.0" />
+  <SewLabParam deprecated="False" name="ifr_height" state="True" type="float" value="1.2" />
+  <SewLabParam deprecated="False" name="use_uniform_taup" state="True" type="bool" value="False" />
+  <SewLabParam deprecated="False" name="uniform_taup" state="True" type="float" value="0.04" />
+  <SewLabParam deprecated="False" name="pop_tolerance" state="True" type="float" value="0.001" />
+  <SewLabParam deprecated="False" name="pop_max_iterations" state="True" type="int" value="500" />
+  <SewLabParam deprecated="False" name="pop_stab_damping" state="True" type="float" value="0.001" />
+  <SewLabParam deprecated="False" name="electron_T_maxiter" state="True" type="int" value="500" />
+  <SewLabParam deprecated="False" name="electron_T_tolerance" state="True" type="float" value="0.5" />
+  <SewLabParam deprecated="False" name="current_uniformity_limit" state="True" type="float" value="1e-06" />
+  <SewLabParam deprecated="False" name="solution_maxiter" state="True" type="int" value="500" />
+  <SewLabParam deprecated="False" name="solution_uniformity_limit" state="True" type="float" value="0.01" />
+  <SewLabParam deprecated="False" name="imaginary_part_limit" state="True" type="float" value="1e-10" />
+  <SewLabParam deprecated="False" name="light_fixed_laser_energy" state="True" type="bool" value="False" />
+  <SewLabParam deprecated="False" name="light_use_bloch_gain" state="True" type="bool" value="False" />
+  <SewLabParam deprecated="False" name="light_laser_energy" state="True" type="float" value="0.15" />
+  <SewLabParam deprecated="False" name="light_gain_window_min_energy" state="True" type="float" value="0.1" />
+  <SewLabParam deprecated="False" name="light_gain_window_max_energy" state="True" type="float" value="0.3" />
+  <SewLabParam deprecated="False" name="light_gain_window_sampling" state="True" type="int" value="64" />
+  <SewLabParam deprecated="False" name="light_losses" state="True" type="float" value="10.0" />
+  <SewLabParam deprecated="False" name="light_initial_photonflux" state="True" type="float" value="2e+22" />
+  <SewLabParam deprecated="False" name="light_bracketing_maxiter" state="True" type="int" value="128" />
+  <SewLabParam deprecated="False" name="light_convergence_maxiter" state="True" type="int" value="500" />
+  <SewLabParam deprecated="False" name="light_convergence_tolerance" state="True" type="float" value="0.1" />
+  <SewLabParam deprecated="False" name="light_damping_factor" state="True" type="float" value="0.3" />
+  <SewLabParam deprecated="False" name="light_photonflux_precision" state="True" type="float" value="0.05" />
+</SewLabParamBlock>
+<SewLabParamBlock name="selfsolver">
+  <SewLabParam deprecated="False" name="max_iterations" state="True" type="int" value="500" />
+  <SewLabParam deprecated="False" name="damping_factor" state="True" type="float" value="0.001" />
+  <SewLabParam deprecated="False" name="energy_precision" state="True" type="float" value="0.00015" />
+  <SewLabParam deprecated="False" name="period_wraping" state="True" type="int" value="2" />
+  <SewLabParam deprecated="False" name="output_history_file" state="True" type="bool" value="False" />
+  <SewLabParam deprecated="False" name="convergence_crop" state="True" type="int" value="7" />
+</SewLabParamBlock>
+<SewLabParamBlock name="thermal-model">
+  <SewLabParam deprecated="False" name="initial_fermi_min" state="True" type="float" value="-0.001" />
+  <SewLabParam deprecated="False" name="initial_fermi_max" state="True" type="float" value="0.001" />
+  <SewLabParam deprecated="False" name="fermi_bracketing_max_iterations" state="True" type="int" value="100" />
+  <SewLabParam deprecated="False" name="fermi_brent_max_iterations" state="True" type="int" value="100" />
+  <SewLabParam deprecated="False" name="fermi_tolerance" state="True" type="float" value="1e-08" />
+</SewLabParamBlock>
+<SewLabParamBlock name="show-options">
+  <SewLabParam deprecated="False" name="underline_eigenstates" state="True" type="bool" value="True" />
+</SewLabParamBlock>
+<SewLabSequence>
+  <xray value="1.0" />
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="22" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+    <SewLabLayerParam name="label" type="str" value="extraction" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="43" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="15" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="38" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="16" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="34" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="18" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="30" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="21" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="28" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+    <SewLabLayerParam name="doping" type="float" value="0.15" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="25" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+    <SewLabLayerParam name="doping" type="float" value="0.15" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="27" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+    <SewLabLayerParam name="doping" type="float" value="0.15" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="32" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="27" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="36" />
+    <SewLabLayerParam name="material" type="str" value="AlInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.48" />
+    <SewLabLayerParam name="mass" type="float" value="0.076" />
+    <SewLabLayerParam name="gap" type="float" value="1.404" />
+    <SewLabLayerParam name="discont" type="float" value="-0.52" />
+  </SewLabLayer>
+  <SewLabLayer>
+    <SewLabLayerParam name="thickness" type="int" value="25" />
+    <SewLabLayerParam name="material" type="str" value="GaInAs" />
+    <SewLabLayerParam name="x" type="float" value="0.47" />
+    <SewLabLayerParam name="mass" type="float" value="0.0427" />
+    <SewLabLayerParam name="gap" type="float" value="0.790" />
+    <SewLabLayerParam name="discont" type="float" value="0.52" />
+  </SewLabLayer>
+</SewLabSequence>
+<SewLabScript>
+  <SewLabScriptParam name="efield" value="-40" />
+  <SewLabScriptParam name="selftransport" value="--no-superself" />
+  <SewLabScriptParam name="outputfile" value="solution.slo" />
+</SewLabScript>
+</SewLabParams>
