@@ -15,7 +15,6 @@ from xml.etree.ElementTree import SubElement
 class SewLab(ModuleBase):
     def __init__(self):
         super(SewLab, self).__init__()
-        ModuleBase.__init__(self)
         self.scriptfile = ""
         self.samplefile = ""
         self.log = gLogger.getSubLogger("SewLab")
@@ -141,7 +140,8 @@ class SewLab(ModuleBase):
                     altered_elem = self.alter_xml(elem, self.parameterchanges)
                     script.append(altered_elem)
                 for param, value in self.parameterchanges.items(): #all remaining elements are added as script parameters
-                    SubElement(script, "SewLabScriptParam", {"name": param, "value": value, "type": type(value).__name__})
+                    SubElement(script, "SewLabScriptParam", {"name": param, "value": value, 
+                                                             "type": type(value).__name__})
                 final_tree = ElementTree.ElementTree(xml_repr)
                 final_tree.write(self.SteeringFile)
             except Exception as error:
