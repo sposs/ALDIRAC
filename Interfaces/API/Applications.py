@@ -145,14 +145,13 @@ class Sewlab(Application):
     '''
     classdocs
     '''
-    def __init__(self):
+    def __init__(self, params=None):
         '''
         Constructor
         '''
         self.AlteredParameters = ""
         self.ParametricVariationOn = ""
-        super(Sewlab, self).__init__()
-        self._sequencetype = ""
+        super(Sewlab, self).__init__(params)
         self._modulename = "SewLab"
         self.appname = self._modulename
         self._moduledescription = 'The sewlab wrapper'
@@ -222,3 +221,53 @@ class Sewlab(Application):
         if not self.SteeringFile:
             return S_ERROR("Missing what Sewlab should do")
         return S_OK()
+
+
+######################################################
+class SewlabPostProcess(Application):
+    """ Post process the sewlab results
+    """
+    def __init__(self, params=None):
+        
+        super(SewlabPostProcess, self).__init__(params)
+        self._modulename = "SewlabPostProcess"
+        self.appname = self._modulename
+        self._moduledescription = 'The sewlab post processor'
+        
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        return m1
+    
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks
+        """
+        pass
+    
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if type(self._linkedidx) == types.IntType:
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
+        return S_OK() 
+  
+
+    
