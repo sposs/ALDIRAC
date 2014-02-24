@@ -57,7 +57,7 @@ class SewlabPostProcess(ModuleBase):
         with open(scriptName, "w") as script:
             script.write("#!/bin/bash\n")
             script.write("declare -x LD_LIBRARY_PATH=/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH\n")
-            script.write("%s -i %s -o %s\n" % (sewlabconv_path, self.InputFile, self.OutputFile))
+            script.write("%s --input %s --output %s\n" % (sewlabconv_path, self.InputFile, self.OutputFile))
             script.write("exit $?\n")
         os.chmod(scriptName, 0755)
         
