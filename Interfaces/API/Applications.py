@@ -153,7 +153,7 @@ class Sewlab(Application):
         self.ParametricVariationOn = ""
         super(Sewlab, self).__init__(params)
         self._modulename = "SewLab"
-        self.appname = self._modulename
+        self.appname = "sewlab"
         self._moduledescription = 'The sewlab wrapper'
 
     def setAlteredParameters(self, params):
@@ -231,7 +231,7 @@ class SewlabPostProcess(Application):
         
         super(SewlabPostProcess, self).__init__(params)
         self._modulename = "SewlabPostProcess"
-        self.appname = self._modulename
+        self.appname = "SewlabPostProcess"
         self._moduledescription = 'The sewlab post processor'
         
     def _userjobmodules(self, stepdefinition):
