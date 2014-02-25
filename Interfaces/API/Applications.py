@@ -5,7 +5,7 @@ Created on Feb 6, 2014
 '''
 from ALDIRAC.Interfaces.API.Application import Application
 from DIRAC.Core.Workflow.Parameter                    import Parameter
-
+from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC import S_OK, S_ERROR
 import types
 import os
@@ -155,6 +155,7 @@ class Sewlab(Application):
         self._modulename = "SewLab"
         self.appname = "sewlab"
         self._moduledescription = 'The sewlab wrapper'
+        self.ops = Operations()
 
     def setAlteredParameters(self, params):
         """ Alter some simulation parameters
@@ -220,6 +221,10 @@ class Sewlab(Application):
         """
         if not self.SteeringFile:
             return S_ERROR("Missing what Sewlab should do")
+        
+        if not self.Version:
+            vers = self.ops.getValue("SewLab/Version", "")
+            self.Version = vers
         return S_OK()
 
 
