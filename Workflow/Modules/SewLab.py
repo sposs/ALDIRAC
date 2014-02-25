@@ -30,7 +30,7 @@ class SewLab(ModuleBase):
         """ Resolve the application specific inputs
         """
         if not self.OutputFile:
-            self.OutputFile = "solution_%s.slo" % self.jobID
+            self.OutputFile = "solution_%s.dat" % self.jobID
         self.parameterchanges["outputfile"] = self.OutputFile
         if self.alteredparams:
             params = self.alteredparams.rstrip(";").split(";")
