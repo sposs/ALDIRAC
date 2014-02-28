@@ -13,7 +13,7 @@ if __name__  == "__main__":
     j.setName("Test")
     j.setJobGroup("test")
     j.setCPUTime(1000)
-    j.setOutputSandbox("*.log")
+    j.setOutputSandbox(["*.log","*.dat"])
 
     s = Sewlab()
     s.setSteeringFile("test.xml")

@@ -11,6 +11,7 @@ import time
 import os
 import subprocess
 from math import log
+import tempfile
 
 def WasteCPUCycles(timecut):
     """ Waste, waste, and waste more CPU.
@@ -130,6 +131,7 @@ class SoftwareInstall(object):
         self.user = ops.getValue("SoftwareInstall/User", None)
         self.path = ops.getValue("SoftwareInstall/Path", None)
         self.host = ops.getValue("SoftwareInstall/Host", None)
+        self.port = ops.getValue("SoftwareInstall/Port", "22")
         
     def execute(self):
         """ Run the installation procedure
@@ -156,26 +158,54 @@ class SoftwareInstall(object):
         if not res['OK']:
             gLogger.error(res['Message'])
             return res
-        
-        
+        dtemp = tempfile.mkdtemp()
+        fpath = os.path.join(dtemp, "rsyncPackages.sh")
+        with open(fpath, "w") as script:
+            script.write("#!/bin/bash\n")
+            script.write("unset LD_LIBRARY_PATH\n")
+            comm = 'rsync -avz -e "ssh -i %(home)s/.ssh/id_dsa -p %(port)s" %(user)s@%(host)s:%(path)s/Packages %(home)s/\n' \
+                   % {"home": os.environ["HOME"], "port": self.port, "host": self.host, "user": self.user, "path": self.path}
+            gLogger.info("Rsync Packages with", comm)
+            script.write(comm)
+            script.write("exit $?\n")
+        os.chmod(fpath, 0755)
         # try to rsync Packages
         #assumming the key is located in $HOME/.ssh/id_dsa
-        comm = ["rsync", "-avz", "-e", '"ssh -i %s/.ssh/id_dsa"' % os.environ["HOME"], 
-                "%s@%s:%s/Packages" % (self.user, self.host, self.path), "%s/" % os.environ["HOME"]]
+        comm = ["sh", '-c', fpath]
         try:
-            gLogger.notice("Running", " ".join(comm))
             subprocess.check_call(comm)
         except subprocess.CalledProcessError:
             gLogger.error("Failed to run the rsync, failing")
             clearLock(lockname)
             return S_ERROR("Failed installation")
+
         #try to rsync app vX, use overwrite flag
-        
+        for app in self.apps:
+            name = app.split(".")[0]
+            version = app.split(".")[1]
+            if not os.path.exists("%s/%s/%s" % (os.environ["HOME"], name, version)):
+                os.makedirs("%s/%s/%s" % (os.environ["HOME"], name, version))
+            fpath = os.path.join(dtemp, "script_%s.sh" % name)
+            with open(fpath, "w") as script:
+                script.write("#!/bin/bash\n")
+                script.write("unset LD_LIBRARY_PATH\n")
+                comm = 'rsync -avz -e "ssh -i %(home)s/.ssh/id_dsa -p %(port)s" %(user)s@%(host)s:%(path)s/%(name)s/%(version)s %(home)s/%(name)s/\n'\
+                        % {"home" : os.environ["HOME"], "user": self.user, "host": self.host, "port": self.port, "name": name, "version": version}
+                gLogger.info("Installing %s %s with" % (name, version), comm)
+                script.write(comm)
+                script.write("exit $?\n")
+            comm = ["sh", "-c", fpath]            
+            try:
+                subprocess.check_call(comm)
+            except subprocess.CalledProcessError:
+                gLogger.error("Failed to install", "%s %s" % (name, version))
+                clearLock(lockname)
+                return S_ERROR("Failed installation")
         #if app==sewlab: install sewlabwrapper with pip, given the local path
         comm = ["pip", "install", "sewlabwrapper", "-f", "file://%s/Packages/sewlabwrapper" % os.environ["HOME"], 
                  "-f", "file://%s/Packages/configuration_manager" % os.environ["HOME"], "--allow-all-external", "-U"]
         try:
-            gLogger.notice("installing sewlabwrapper with", " ".join(comm))
+            gLogger.notice("Installing sewlabwrapper with", " ".join(comm))
             subprocess.check_call(comm)
         except subprocess.CalledProcessError:
             gLogger.error("Couldn't install sewlabwrapper")

@@ -40,6 +40,10 @@ class SewLab(ModuleBase):
         if self.parametricvar:
             self.parameterchanges[self.parametricvar] = self.parametricParameters
 
+
+        if not self.SteeringFile:
+            if self.InputFile:
+                self.SteeringFile  = os.path.basename(self.InputFile[0])
         return S_OK()
     
     def runIt(self):
