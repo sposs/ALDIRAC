@@ -13,6 +13,7 @@ Contents:
 
    UsingDirac
    Software
+   FileCatalog
 
 Indices and tables
 ==================
