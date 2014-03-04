@@ -7,7 +7,7 @@ from math import sqrt
 
 class IVLorentianMesh (object):
     
-    def __init__(self, alignmentField, ivSampling, upFraction, ivBroadening):
+    def __init__(self, alignmentField, ivSampling, upFraction=0.1, ivBroadening=5.0):
         
         self.upFraction = upFraction
         self.ivBroadening = ivBroadening
