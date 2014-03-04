@@ -104,6 +104,10 @@ class SewLab(ModuleBase):
         elif len(self.stdError) > 0:
             self.log.info( "%s execution completed with application warning:" % os.path.basename(scriptName) )
             self.log.info(self.stdError)
+        elif not os.path.exists(self.OutputFile):
+            self.log.error("Missing output file")
+            status = 2
+            failed = True
         else:
             self.log.info( "%s execution completed successfully:" % os.path.basename(scriptName) )
         

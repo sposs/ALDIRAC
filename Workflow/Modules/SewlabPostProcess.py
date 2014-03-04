@@ -4,20 +4,15 @@ Created on Feb 21, 2014
 @author: stephanep
 '''
 from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
-from DIRAC import S_OK, S_ERROR, gLogger
-from DIRAC.Core.Utilities.Subprocess                      import shellCall
+from DIRAC                               import S_OK, S_ERROR, gLogger
+from DIRAC.Core.Utilities.Subprocess     import shellCall
 import os
 
 class SewlabPostProcess(ModuleBase):
     '''
-    classdocs
+    Convert the sewlab output to python pickle
     '''
-
-
     def __init__(self):
-        '''
-        Constructor
-        '''
         super(SewlabPostProcess, self).__init__()
         self.log = gLogger.getSubLogger("SewlabPostProcess")
         
@@ -25,8 +20,9 @@ class SewlabPostProcess(ModuleBase):
         """ Check if the output file is defined
         """
         if not self.OutputFile:
-            self.OutputFile = "output_%s.xml" % self.jobID
-
+            self.OutputFile = "output_%s.pkl" % self.jobID
+        if not self.InputFile:
+            return S_ERROR("Missing input file")
         return S_OK()
 
     def runIt(self):
@@ -42,22 +38,25 @@ class SewlabPostProcess(ModuleBase):
         if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
             self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
             return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
-        
-        sewlabconv_path = self.ops.getValue("", "")
+        bin_name = self.ops.getValue("SewLab/ConverterName", "al_sewlabwrapper_convert")
+        sewlabconv_path = self.ops.getValue("SharedArea", "")
+        fin_path = os.path.join(sewlabconv_path, bin_name)
         if not sewlabconv_path:
             self.log.error("Path to the converter not defined")
             return S_ERROR("Failed to find converter")
-        elif not os.path.exists(sewlabconv_path):
-            self.log.error("Path to sewlabwrapper_conv isn't defined")
+        elif not os.path.exists(fin_path):
+            self.log.error("Coudn't find the converter")
             return S_ERROR("Failed to find converter")
         else:
-            self.log.info("Found converter at", sewlabconv_path)
+            self.log.info("Found converter at", fin_path)
             
         scriptName = '%s_Run_%s.sh' % (self.applicationName, self.STEP_NUMBER)
         with open(scriptName, "w") as script:
             script.write("#!/bin/bash\n")
             script.write("declare -x LD_LIBRARY_PATH=/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH\n")
-            script.write("%s --input %s --output %s\n" % (sewlabconv_path, self.InputFile, self.OutputFile))
+            comm = "%s --input %s --output %s\n" % (fin_path, self.InputFile[0], self.OutputFile)
+            gLogger.info("Running ", comm)
+            script.write(comm)
             script.write("exit $?\n")
         os.chmod(scriptName, 0755)
         

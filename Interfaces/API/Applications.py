@@ -265,8 +265,11 @@ class SewlabPostProcess(Application):
     def _checkConsistency(self):
         """ Checks
         """
-        pass
+        return S_OK()
     
+    def _checkWorkflowConsistency(self):
+        return self._checkRequiredApp()
+
     def _resolveLinkedStepParameters(self, stepinstance):
         if type(self._linkedidx) == types.IntType:
             self._inputappstep = self._jobsteps[self._linkedidx]
