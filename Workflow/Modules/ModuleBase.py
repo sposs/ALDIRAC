@@ -12,6 +12,8 @@ from DIRAC.RequestManagementSystem.private.RequestValidator   import gRequestVal
 from ALDIRAC.Core.Utilities.FileUtilities                 import fullCopy
 
 import os, urllib, types, shutil, glob, sys
+from DIRAC.Core.Utilities.Adler import fileAdler
+from DIRAC.Core.Utilities.File import makeGuid
 
 class ModuleBase(object):
     '''
@@ -66,8 +68,107 @@ class ModuleBase(object):
         self.request = None
         self.jobReport = None
         self.basedirectory = os.getcwd()
+
+
+    #############################################################################
+    def getCandidateFiles(self, outputList, outputLFNs):
+        """ Returns list of candidate files to upload, check if some outputs are missing.
+            
+          @param outputList: has the following structure:
+          [ ('outputDataType':'','outputDataSE':'','outputDataName':'') , (...) ] 
+              
+          @param outputLFNs: list of output LFNs for the job
+                        
+          @return: dictionary containing type, SE and LFN for files restricted by mask
+        """
+        fileInfo = {}
+        for outputFile in outputList:
+            if outputFile.has_key('outputFile') and outputFile.has_key('outputDataSE') and outputFile.has_key('outputPath'):
+                fname = outputFile['outputFile']
+                fileSE = outputFile['outputDataSE']
+                filePath = outputFile['outputPath']
+                fileInfo[fname] = {'path' : filePath, 'workflowSE' : fileSE}
+            else:
+                self.log.error('Ignoring malformed output data specification', str(outputFile))
         
+        for lfn in outputLFNs:
+            if os.path.basename(lfn) in fileInfo.keys():
+                fileInfo[os.path.basename(lfn)]['lfn']=lfn
+                self.log.verbose('Found LFN %s for file %s' %(lfn, os.path.basename(lfn)))
+                if len(os.path.basename(lfn))>127:
+                    self.log.error('Your file name is WAAAY too long for the FileCatalog. Cannot proceed to upload.')
+                    return S_ERROR('Filename too long')
+                if len(lfn)>256+127:
+                    self.log.error('Your LFN is WAAAAY too long for the FileCatalog. Cannot proceed to upload.')
+                    return S_ERROR('LFN too long')
+            
+        #Check that the list of output files were produced
+        for fileName, metadata in fileInfo.items():
+            if not os.path.exists(fileName):
+                self.log.error('Output data file %s does not exist locally' % fileName)
+                if not self.ignoreapperrors:
+                    return S_ERROR('Output Data Not Found')
+                del fileInfo[fileName]
+
+        candidateFiles = fileInfo
+        #Sanity check all final candidate metadata keys are present (return S_ERROR if not)
+        mandatoryKeys = ['path', 'workflowSE', 'lfn'] #filedict is used for requests
+        for fileName, metadata in candidateFiles.items():
+            for key in mandatoryKeys:
+                if not metadata.has_key(key):
+                    return S_ERROR('File %s has missing %s' % (fileName, key))
+
+        return S_OK(candidateFiles)  
         
+    #############################################################################
+    def getFileMetadata(self, candidateFiles):
+        """Returns the candidate file dictionary with associated metadata.
+        
+        @param candidateFiles: The input candidate files dictionary has the structure:
+        {'lfn':'','path':'','workflowSE':''}
+           
+        This also assumes the files are in the current working directory.
+        @return: File Metadata
+        """
+        #Retrieve the POOL File GUID(s) for any final output files
+        self.log.info('Will search GUIDs for: %s' %(', '.join(candidateFiles.keys())))
+        pfnGUIDs = {}
+        generated = []
+        for fname in candidateFiles.keys():
+            guid = makeGuid(fname)
+            pfnGUIDs[fname] = guid
+            generated.append(fname)
+        pfnGUID = S_OK(pfnGUIDs)
+        pfnGUID['generated'] = generated
+
+        self.log.debug('Generated GUID(s) for the following files ', ', '.join(pfnGUID['generated']))
+
+        for pfn, guid in pfnGUID['Value'].items():
+            candidateFiles[pfn]['GUID'] = guid
+        
+        #Get all additional metadata about the file necessary for requests
+        final = {}
+        for fileName, metadata in candidateFiles.items():
+            fileDict = {}
+            fileDict['LFN'] = metadata['lfn']
+            fileDict['Size'] = os.path.getsize(fileName)
+            fileDict['Addler'] = fileAdler(fileName)
+            fileDict['GUID'] = metadata['GUID']
+            fileDict['Status'] = "Waiting"   
+          
+            final[fileName] = metadata
+            final[fileName]['filedict'] = fileDict
+            final[fileName]['localpath'] = '%s/%s' % (os.getcwd(), fileName)  
+        
+        #Sanity check all final candidate metadata keys are present (return S_ERROR if not)
+        mandatoryKeys = ['GUID', 'filedict'] #filedict is used for requests (this method adds guid and filedict)
+        for fileName, metadata in final.items():
+            for key in mandatoryKeys:
+                if not metadata.has_key(key):
+                    return S_ERROR('File %s has missing %s' % (fileName, key))
+        
+        return S_OK(final)
+    
     #############################################################################
     def setApplicationStatus(self, status, sendFlag=True):
         """Wraps around setJobApplicationStatus of state update client

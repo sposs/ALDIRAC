@@ -8,6 +8,7 @@ defined in the user workflow.
 @author: S. Poss
 @since: Sep 01, 2010
 """
+import glob
 
 __RCSID__ = "$Id: UserJobFinalization.py 71836 2013-11-20 13:47:14Z sposs $"
 
@@ -132,43 +133,46 @@ class UserJobFinalization(ModuleBase):
         #Determine the final list of possible output files for the
         #workflow and all the parameters needed to upload them.
         outputList = []
+        possible_files= []
         for i in self.userOutputData:
-            outputList.append({'outputPath' : i.split('.')[-1].upper(),
-                               'outputDataSE' : self.userOutputSE,
-                               'outputFile' : os.path.basename(i)})
-        
+            files = glob.glob(i)
+            for possible_file in files:
+                outputList.append({'outputPath' : i.split('.')[-1].upper(),
+                                   'outputDataSE' : self.userOutputSE,
+                                   'outputFile' : os.path.basename(possible_file)})
+                possible_files.append(os.path.basename(possible_file))
+                
         userOutputLFNs = []
-        if self.userOutputData:
-            self.log.info('Constructing user output LFN(s) for %s' % (', '.join(self.userOutputData)))
-            if not self.jobID:
-                self.jobID = 12345
-            owner = ''
-            if 'Owner' in self.workflow_commons:
-                owner = self.workflow_commons['Owner']
-            else:
-                res = getCurrentOwner()
-                if not res['OK']:
-                    self.log.error('Could not find proxy')
-                    return S_ERROR('Could not obtain owner from proxy')
-                owner = res['Value']
-            vo = ''
-            if self.workflow_commons.has_key('VO'):
-                vo = self.workflow_commons['VO']
-            else:
-                res = getCurrentVO()
-                if not res['OK']:
-                    self.log.error('Failed finding the VO')
-                    return S_ERROR('Could not obtain VO from proxy')
-                vo = res['Value']
-          
-            result = constructUserLFNs(int(self.jobID), vo, owner, self.userOutputData, self.userOutputPath)
-            if not result['OK']:
-                self.log.error('Could not create user LFNs', result['Message'])
-                return result
-            userOutputLFNs = result['Value']
+        self.log.info('Constructing user output LFN(s) for %s' % (', '.join(self.userOutputData)))
+        if not self.jobID:
+            self.jobID = 12345
+        owner = ''
+        if 'Owner' in self.workflow_commons:
+            owner = self.workflow_commons['Owner']
+        else:
+            res = getCurrentOwner()
+            if not res['OK']:
+                self.log.error('Could not find proxy')
+                return S_ERROR('Could not obtain owner from proxy')
+            owner = res['Value']
+        vo = ''
+        if self.workflow_commons.has_key('VO'):
+            vo = self.workflow_commons['VO']
+        else:
+            res = getCurrentVO()
+            if not res['OK']:
+                self.log.error('Failed finding the VO')
+                return S_ERROR('Could not obtain VO from proxy')
+            vo = res['Value']
+      
+        result = constructUserLFNs(int(self.jobID), vo, owner, possible_files, self.userOutputPath)
+        if not result['OK']:
+            self.log.error('Could not create user LFNs', result['Message'])
+            return result
+        userOutputLFNs = result['Value']
         
-        self.log.verbose('Calling getCandidateFiles( %s, %s, %s)' % (outputList, userOutputLFNs, self.outputDataFileMask))
-        result = self.getCandidateFiles(outputList, userOutputLFNs, self.outputDataFileMask)
+        self.log.verbose('Calling getCandidateFiles( %s, %s)' % (outputList, userOutputLFNs))
+        result = self.getCandidateFiles(outputList, userOutputLFNs)
         if not result['OK']:
             if not self.ignoreapperrors:
                 self.log.error(result['Message'])

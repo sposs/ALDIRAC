@@ -194,9 +194,9 @@ class Dirac(dapi):
                 if data == item:
                     self.log.error("Output data and sandbox should not contain the same things.")
                     return S_ERROR("Output data and sandbox should not contain the same things.")
-            if data.find("*") > -1:
-                self.log.error("Remove wildcard characters from output data definition: must be exact files")
-                return S_ERROR("Wildcard character in OutputData definition")
+            #if data.find("*") > -1:
+            #    self.log.error("Remove wildcard characters from output data definition: must be exact files")
+            #    return S_ERROR("Wildcard character in OutputData definition")
         return S_OK()
     
     def checkInputSandboxLFNs(self, job):
