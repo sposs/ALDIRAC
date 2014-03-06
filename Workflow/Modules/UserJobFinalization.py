@@ -16,6 +16,7 @@ from DIRAC.DataManagementSystem.Client.ReplicaManager      import ReplicaManager
 from DIRAC.DataManagementSystem.Client.FailoverTransfer    import FailoverTransfer
 
 from DIRAC.Core.Security.ProxyInfo                         import getProxyInfo
+from DIRAC.Core.Utilities.File import getGlobbedFiles
 
 
 from ALDIRAC.Workflow.Modules.ModuleBase                 import ModuleBase
@@ -135,14 +136,16 @@ class UserJobFinalization(ModuleBase):
         outputList = []
         possible_files= []
         for i in self.userOutputData:
-            files = glob.glob(i)
+            files = getGlobbedFiles(i)
             for possible_file in files:
-                outputList.append({'outputPath' : i.split('.')[-1].upper(),
+                if possible_file in possible_files:
+                    #Don't have twice the same file
+                    continue
+                outputList.append({'outputDataType' : i.split('.')[-1].upper(),#this would be used to sort the files in different dirs
                                    'outputDataSE' : self.userOutputSE,
                                    'outputFile' : os.path.basename(possible_file)})
                 possible_files.append(os.path.basename(possible_file))
                 
-        userOutputLFNs = []
         self.log.info('Constructing user output LFN(s) for %s' % (', '.join(self.userOutputData)))
         if not self.jobID:
             self.jobID = 12345
@@ -164,8 +167,8 @@ class UserJobFinalization(ModuleBase):
                 self.log.error('Failed finding the VO')
                 return S_ERROR('Could not obtain VO from proxy')
             vo = res['Value']
-      
-        result = constructUserLFNs(int(self.jobID), vo, owner, possible_files, self.userOutputPath)
+        result = constructUserLFNs(int(self.jobID), vo, owner, 
+                                   possible_files, self.userOutputPath)
         if not result['OK']:
             self.log.error('Could not create user LFNs', result['Message'])
             return result
@@ -179,7 +182,7 @@ class UserJobFinalization(ModuleBase):
                 self.setApplicationStatus(result['Message'])
                 return S_OK()
         
-        fileDict = result['Value']      
+        fileDict = result['Value']
         result = self.getFileMetadata(fileDict)
         if not result['OK']:
             if not self.ignoreapperrors:
@@ -207,7 +210,7 @@ class UserJobFinalization(ModuleBase):
         #At this point can exit and see exactly what the module will upload
         if not self.enable:
             self.log.info('Module is disabled by control flag, would have attempted \
-            to upload the following files %s' % ', '.join(final.keys()))
+to upload the following files %s' % ', '.join(final.keys()))
             for fileName, metadata in final.items():
                 self.log.info('--------%s--------' % fileName)
                 for n, v in metadata.items():
@@ -227,7 +230,7 @@ class UserJobFinalization(ModuleBase):
                 self.log.info("Attempting to store file %s to the following SE(s):\n%s" % (fileName, 
                                                                                            ', '.join(metadata['resolvedSE'])))
                 result = failoverTransfer.transferAndRegisterFile(fileName, metadata['localpath'], metadata['lfn'],
-                                                                  metadata['resolvedSE'], fileMetaDict = metadata, 
+                                                                  metadata['rignoreapperrorsesolvedSE'], fileMetaDict = metadata, 
                                                                   fileCatalog = self.userFileCatalog)
                 if not result['OK']:
                     self.log.error('Could not transfer and register %s with metadata:\n %s' % (fileName, metadata))

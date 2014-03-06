@@ -65,6 +65,7 @@ class ModuleBase(object):
         self.isProdJob = False
         self.production_id = 0
         self.prod_job_id = 0
+        self.jobName = ""
         self.request = None
         self.jobReport = None
         self.basedirectory = os.getcwd()
@@ -83,11 +84,11 @@ class ModuleBase(object):
         """
         fileInfo = {}
         for outputFile in outputList:
-            if outputFile.has_key('outputFile') and outputFile.has_key('outputDataSE') and outputFile.has_key('outputPath'):
+            if outputFile.has_key('outputFile') and outputFile.has_key('outputDataSE') and outputFile.has_key('outputDataType'):
                 fname = outputFile['outputFile']
                 fileSE = outputFile['outputDataSE']
-                filePath = outputFile['outputPath']
-                fileInfo[fname] = {'path' : filePath, 'workflowSE' : fileSE}
+                filePath = outputFile['outputDataType']
+                fileInfo[fname] = {'type' : filePath, 'workflowSE' : fileSE}
             else:
                 self.log.error('Ignoring malformed output data specification', str(outputFile))
         
@@ -112,7 +113,7 @@ class ModuleBase(object):
 
         candidateFiles = fileInfo
         #Sanity check all final candidate metadata keys are present (return S_ERROR if not)
-        mandatoryKeys = ['path', 'workflowSE', 'lfn'] #filedict is used for requests
+        mandatoryKeys = ['type', 'workflowSE', 'lfn'] #filedict is used for requests
         for fileName, metadata in candidateFiles.items():
             for key in mandatoryKeys:
                 if not metadata.has_key(key):
@@ -159,6 +160,8 @@ class ModuleBase(object):
             final[fileName] = metadata
             final[fileName]['filedict'] = fileDict
             final[fileName]['localpath'] = '%s/%s' % (os.getcwd(), fileName)  
+        
+        gLogger.verbose("Full file dict", str(final))
         
         #Sanity check all final candidate metadata keys are present (return S_ERROR if not)
         mandatoryKeys = ['GUID', 'filedict'] #filedict is used for requests (this method adds guid and filedict)
@@ -244,6 +247,7 @@ class ModuleBase(object):
           
         self.jobType = self.workflow_commons.get('JobType', '')
 
+        self.jobName = self.workflow_commons.get("JobName", "")
 #         if self.workflow_commons.has_key('NbOfEvts'):
 #             if self.workflow_commons['NbOfEvts'] > 0:
 #                 self.NumberOfEvents = self.workflow_commons['NbOfEvts']

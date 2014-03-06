@@ -7,6 +7,7 @@ from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC                               import S_OK, S_ERROR, gLogger
 from DIRAC.Core.Utilities.Subprocess     import shellCall
 import os
+from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 
 class SewlabPostProcess(ModuleBase):
     '''
@@ -15,6 +16,7 @@ class SewlabPostProcess(ModuleBase):
     def __init__(self):
         super(SewlabPostProcess, self).__init__()
         self.log = gLogger.getSubLogger("SewlabPostProcess")
+        self.simudb = SimuDBClient()
         
     def applicationSpecificInputs(self):
         """ Check if the output file is defined
@@ -66,9 +68,11 @@ class SewlabPostProcess(ModuleBase):
         result = shellCall(0, comm, callbackFunction = self.redirectLogOutput, bufferLimit = 20971520)
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
+            self.simudb.set_status(self.jobName, "failed")
             return S_ERROR('Problem Executing Application')
         
         if not os.path.exists(self.OutputFile):
+            self.simudb.set_status(self.jobName, "failed")
             return S_ERROR("Output file not produced")
         return S_OK()
 

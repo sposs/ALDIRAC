@@ -11,6 +11,7 @@ import os
 
 from xml.etree import ElementTree
 from xml.etree.ElementTree import SubElement
+from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 
 class SewLab(ModuleBase):
     def __init__(self):
@@ -25,6 +26,7 @@ class SewLab(ModuleBase):
         self.parameterchanges = {}
         self.alteredparams = ""
         self.parametricvar = ""
+        self.simudb = SimuDBClient()
         
     def applicationSpecificInputs(self):
         """ Resolve the application specific inputs
@@ -85,10 +87,12 @@ class SewLab(ModuleBase):
         
         comm = 'sh -c "./%s"' % (scriptName)
         self.setApplicationStatus('%s %s step %s' % (self.applicationName, self.applicationVersion, self.STEP_NUMBER))
+        self.simudb.set_status(self.jobName, "running")
         self.stdError = ''
         result = shellCall(0, comm, callbackFunction = self.redirectLogOutput, bufferLimit = 20971520)
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
+            self.simudb.set_status(self.jobName, "failed")
             return S_ERROR('Problem Executing Application')
 
         resultTuple = result['Value']
@@ -106,6 +110,7 @@ class SewLab(ModuleBase):
             self.log.info(self.stdError)
         elif not os.path.exists(self.OutputFile):
             self.log.error("Missing output file")
+            self.simudb.set_status(self.jobName, "failed")
             status = 2
             failed = True
         else:
