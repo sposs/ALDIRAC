@@ -38,13 +38,13 @@ class SimuDBHandler(RequestHandler):
             return S_ERROR("Cannot insert result, job is already completed")
         try:
             simu.set_data(res_dict)
-        except:
-            self.export_setStatus("failed", simuid)
+        except Exception as error:
+            simu.set_status("failed", "Failed to insert result: %s" % str(error))
             return S_ERROR("Failed to insert result")
         return self.export_setStatus("done", simuid)
     
     types_setStatus = [types.StringType, types.StringTypes]
-    def export_setStatus(self, simuid, status):
+    def export_setStatus(self, simuid, status, message = ""):
         """ Set the task status
         """
         group_id, simu_id = [int(x) for x in simuid.split("_")]
@@ -63,8 +63,8 @@ class SimuDBHandler(RequestHandler):
             gLogger.error("Invalid transition")
             return {"OK": False, "Message": "Invalid transition from %s to %s" % (current_status, status), "Status": current_status}
         try:
-            simu.set_status(status)
-        except:
-            return S_ERROR("Failed to set new status %s" % status)
+            simu.set_status(status, message)
+        except Exception as error:
+            return S_ERROR("Failed to set new status %s: %s" % (status, str(error)))
         return S_OK(status)
         

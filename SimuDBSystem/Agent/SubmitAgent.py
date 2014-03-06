@@ -131,7 +131,7 @@ class SubmitAgent( AgentModule ):
         simu_group = sim.get_group()
         job.setJobGroup(simu_group.name)
         simu_id = sim.id
-        job.setName("%s_%s" % (simu_group.name, simu_id))
+        job.setName("%s_%s" % (simu_group.name, simu_id))#This is important for the status setting, and output registration
         app_dict = {}
         app_dict[""] = ""
         res = get_app_list(app_dict)

@@ -12,12 +12,15 @@ class RegisterOutput(ModuleBase):
     def __init__(self):
         super(RegisterOutput, self).__init__()
         self.log = gLogger.getSubLogger("RegisterOutput")
+        self.simudb = SimuDBClient()
         
     def applicationSpecificInputs(self):
-        """ Resolve the applciation specific inputs
+        """ Resolve the application specific inputs
         """
         if not self.jobName:
             return S_ERROR("Cannot find proper job name")
+        if not self.InputFile:
+            return S_ERROR("Missing file to send back")
         return S_OK()
     
     def execute(self):
@@ -35,17 +38,20 @@ class RegisterOutput(ModuleBase):
             res_dict = pickle.load(open(self.InputFile,"rb"))
         except Exception as error:
             self.log.error("Failed to load from pickle:", str(error))
+            res = self.simudb.setStatus(self.jobName, "failed", "Can't load from pickled file")
+            if not res['OK']:
+                self.log.error("Failed to set status to failed:", res["Message"])
             return S_ERROR("Failed loading from pickle")
         
-        
-        
-        simu_db = SimuDBClient()
-        res = simu_db.addResult(self.jobName, res_dict.dumps())
+        res = self.simudb.addResult(self.jobName, res_dict.dumps())
         if not res["OK"]:
-            res = simu_db.setStatus("failed")
-            if not res['OK']:#try again
-                res = simu_db.setStatus("failed")
-                if not res["OK"]:
-                    self.log.error("Failed to set to failed")
-                    return S_ERROR("Failed setting final status")
+            self.log.error("Failed to send the results:", res["Message"])
+            res = self.simudb.setStatus(self.jobName, "failed", "Cannot send results: %s" % res["Message"])
+            if not res['OK']:
+                self.log.error("Failed to set status to failed:", res["Message"])
+                res = self.simudb.setStatus(self.jobName, "failed", "%s" % res["Message"])
+                if not res["OK"]:#try again
+                    self.log.error("Failed to set status to failed:", res["Message"])
+                    return S_ERROR("Failed setting final failed status")
+                
         return S_OK()
