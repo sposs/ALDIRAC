@@ -9,6 +9,8 @@ from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC import S_OK, S_ERROR
 import types
 import os
+from Core.DISET.private.FileHelper import gLogger
+from ALDIRAC.Interfaces.API.Applications import RegisterOu
 
 
 class GenericApplication(Application):
@@ -276,6 +278,70 @@ class SewlabPostProcess(Application):
         if self._inputappstep:
             stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
         return S_OK() 
-  
 
+class RegisterOutput(Application):
+    """ Take the input file, and send it straight to the SimuDB
+    """
+    def __init__(self, params=None):
+        super(RegisterOutput, self).__init__(params)
+        self._modulename = "RegisterOutput"
+        self.appname = self._modulename
+        self._moduledescription = 'Register the output into the SimuDB'
+        
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        return m1
     
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+        
+    def _checkWorkflowConsistency(self):
+        return self._checkRequiredApp()
+
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if type(self._linkedidx) == types.IntType:
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
+        return S_OK() 
+
+def get_app_list(app_dict):
+    """ Given a generic application name, return a list of applications to be added
+    Format is app['name'] = version
+    """
+    app_list = []
+    for name, version in app_dict.items():
+        if name.lower() == "sewlab":
+            app1 = Sewlab()
+            app1.setVersion(version)
+            app1.setOutputFile("default.slo")
+            app_list.append(app1)
+            app2 = SewlabPostProcess()
+            app2.getInputFromApp(app1)
+            app2.setOutputFile("data.pkl")
+            app_list.append(app2)
+            app3 = RegisterOutput()
+            app3.getInputFromApp(app2)
+            app_list.append(app3)
+        else:
+            gLogger.error("Invalid application name")
+            return S_ERROR("Bad application name")
+
+    return S_OK(app_list)
+
