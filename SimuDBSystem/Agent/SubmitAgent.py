@@ -14,6 +14,8 @@ from ALDIRAC.Interfaces.API.UserJob                   import UserJob
 from ALDIRAC.Interfaces.API.Applications              import get_app_list
 from DIRAC.DataManagementSystem.Client.ReplicaManager import ReplicaManager
 import os
+from simudb.db.simu_interface import SimuInterface
+from simudb.helpers.script_base import create_connection
 
 
 __RCSID__ = '$Id: $'
@@ -30,8 +32,11 @@ class SubmitAgent( AgentModule ):
         
     def initialize( self ):
         self.am_setOption( 'shifterProxy', self.shifterProxy )
-        gMonitor.registerActivity( "SubmittedTasks", "Automatically submitted tasks", "SimuDB Monitoring", "Tasks",
+        gMonitor.registerActivity( "SubmittedTasks", 
+                                   "Automatically submitted tasks", 
+                                   "SimuDB Monitoring", "Tasks",
                                    gMonitor.OP_ACUM )
+        self.simudb = SimuInterface(create_connection())
         return S_OK()
     
     def execute(self):
@@ -51,47 +56,52 @@ class SubmitAgent( AgentModule ):
         Mark the simugroup as submitted if not task are found
         
         """
-        simusgroups = self.simudb.get_simulations_groups(status = ["new", "submitting"])
-        if not simusgroups:
-            simusgroups = []
-        simus = {}
-        for simugroup in simusgroups:
-            if not simugroup in simus:
-                simus[simugroup] = []
-            if simugroup.get_status() == "new":
-                res = self._handle_defaultXML(simugroup)
+        try:
+            #TODO: make sure the simu groups that have no simulations are still returned so that they get their final status
+            simusdict = self.simudb.get_simulations_with_status_in_group_with_status(status = ["new"], gstat = ["new", "submitting"])
+        except:
+            return S_ERROR("Couldn't get the simu dict")
+        simus_ids = {}
+        for simugroupid in simusdict.keys():
+            #TODO: handle priorities
+            if not simugroupid in simus_ids:
+                simus_ids[simugroupid] = []
+            if self.simudb.get_simulationgroup_status(simugroupid) == "new":
+                res = self._handle_defaultXML(simugroupid)
                 if not res["OK"]:
                     self.log.error("Failed to upload default XML for the group \n   Won't submit anything!")
                     continue
-            sim = simugroup.get_simulations(status=["new"])
+            sim = simusdict[simugroupid]["simulations"]
             if not sim:
                 gLogger.info("Simugroup doesn't have any jobs to submit")
-                simugroup.set_status("submitted")
+                self.simudb.set_simulationgroup_status(simugroupid, "submitted")
                 continue
-            simus[simugroup].append(sim)
-        return S_OK(simus)
+            simus_ids[simugroupid].append(sim)
+        return S_OK(simus_ids)
     
-    def _handle_defaultXML(self, simugroup):
+    def _handle_defaultXML(self, simugroupid):
         """ Upload the default XML for this group
         """
-        input_xml_content = simugroup.xml
+        input_xml_content = self.simudb.get_simulationgroup_xml(simugroupid)
         input_xml = "./default.xml"
         with open(input_xml, "w") as xml_file:
             #TODO: depending on the type of input_xml_content, convert to string
             xml_file.write(input_xml_content)
         
         basepath = "/alpeslasers/simu/"
-        final_path  = os.path.join(basepath, simugroup.id, "default.xml")
+        final_path  = os.path.join(basepath, simugroupid, "default.xml")
         rm = ReplicaManager()
         res = rm.putAndRegister(final_path, input_xml, "AL-DIP")
         if not res["OK"]:
             self.log.error("Failed to upload default.xml to SE:", res["Message"])
             return S_ERROR("Failed to upload default xml")
         os.unlink(input_xml)
-        simugroup.set_default_path(final_path)
+        self.simudb.set_simulationgroup_path(final_path)
         return S_OK()
     
     def _submit(self, simulations):
+        """ Create and submit the tasks
+        """
         gLogger.info( "_submit: Submitting tasks" )
         res = getProxyInfo( False, False )
         if not res['OK']:
@@ -101,9 +111,9 @@ class SubmitAgent( AgentModule ):
         owner = proxyInfo['username']
         ownerGroup = proxyInfo['group']
         gLogger.info( "_submit: Tasks will be submitted with the credentials %s:%s" % ( owner, ownerGroup ) )
-        for simgroup, simulations in simulations.items():
-            for sim in simulations:
-                res = self._make_job(sim)
+        for simgroupid, simulations_id in simulations.items():
+            for simid in simulations_id:
+                res = self._make_job(simid)
                 if not res["OK"]:
                     self.log.error("Failed to make task", res['Message'])
                     continue
@@ -117,21 +127,21 @@ class SubmitAgent( AgentModule ):
                     self.log.error("Failed submitting task", res["Message"])
                     continue
                 jobid = res["Value"]
-                sim.set_status("waiting")
-                sim.set_jobid(jobid)
+                self.simudb.set_simulation_status(simid, "waiting")
+                self.simudb.set_jobid(simid, jobid)
                 os.unlink("jobDescription.xml")
-            simgroup.set_status("submitting")
+            self.simudb.set_simulationgroup_status(simgroupid, "submitting")
         return S_OK()
     
-    def _make_job(self, sim):
+    def _make_job(self, simid):
         """ Make a job given the input simulation
         """
         job = UserJob()
         #here, get CPUTime, type (version) from sim
-        simu_group = sim.get_group()
-        job.setJobGroup(simu_group.name)
-        simu_id = sim.id
-        job.setName("%s_%s" % (simu_group.name, simu_id))#This is important for the status setting, and output registration
+        simu_group = self.simudb.get_simulation_group(simid)
+        job.setJobGroup(simu_group)
+        job.setName("%s" % (simid))#This is important for the status setting, and output registration
+        #TODO: get from the XML or simulation the app properties such as name/version
         app_dict = {}
         app_dict[""] = ""
         res = get_app_list(app_dict)
@@ -140,10 +150,11 @@ class SubmitAgent( AgentModule ):
             return res
         for app in res["Value"]:
             if app.appname.lower() == "sewlab":
-                app.setSteeringFile("LFN:"+simu_group.default_xml_lfnpath)
+                path = self.simudb.get_simulationgroup_path(simu_group)
+                app.setSteeringFile("LFN:"+path)
                 #app.setSomething() #the XML diff WRT the original file
                 job.setOutputData(["*.pkl"], 
-                                  "%s/s" % (simu_group, simu_id), 
+                                  "%s/s" % (simu_group, simid), 
                                   "AL-DIP")
             res = job.append(app)
             if not res['OK']:
