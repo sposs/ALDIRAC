@@ -63,6 +63,12 @@ class Job(DiracJob):
         self._addParameter(self.workflow, 'IgnoreAppError', 'JDL', True, 'To ignore application errors')
         return S_OK()
     
+    def setPriority(self, priority):
+        """ Set the job priority
+        """
+        self._addJDLParameter("Priority", priority)
+        return S_OK()
+    
     def dontPromptMe(self):
         """ Helper function
         
