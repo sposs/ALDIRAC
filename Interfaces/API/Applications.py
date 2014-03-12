@@ -9,9 +9,6 @@ from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC import S_OK, S_ERROR
 import types
 import os
-from Core.DISET.private.FileHelper import gLogger
-from ALDIRAC.Interfaces.API.Applications import RegisterOu
-
 
 class GenericApplication(Application):
     """ Run a script (python or shell) in an application environment.
@@ -321,6 +318,7 @@ class RegisterOutput(Application):
             stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
         return S_OK() 
 
+from DIRAC import gLogger
 def get_app_list(app_dict):
     """ Given a generic application name, return a list of applications to be added
     Format is app['name'] = version
