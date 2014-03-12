@@ -8,6 +8,7 @@ from DIRAC.Core.Utilities.ReturnValues import S_OK, S_ERROR
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 from DIRAC import gLogger
 import pickle
+import os
 class RegisterOutput(ModuleBase):
     def __init__(self):
         super(RegisterOutput, self).__init__()
@@ -34,16 +35,16 @@ class RegisterOutput(ModuleBase):
         if not result['OK']:
             self.log.error("Failed to resolve input parameters:", result['Message'])
             return result
-        try:
-            res_dict = pickle.load(open(self.InputFile,"rb"))
-        except Exception as error:
-            self.log.error("Failed to load from pickle:", str(error))
-            res = self.simudb.setStatus(self.jobName, "failed", "Can't load from pickled file")
-            if not res['OK']:
-                self.log.error("Failed to set status to failed:", res["Message"])
-            return S_ERROR("Failed loading from pickle")
-        
-        res = self.simudb.addResult(self.jobName, res_dict.dumps())
+#         try:
+#             res_dict = pickle.load(open(self.InputFile,"rb"))
+#         except Exception as error:
+#             self.log.error("Failed to load from pickle:", str(error))
+#             res = self.simudb.setStatus(self.jobName, "failed", "Can't load from pickled file")
+#             if not res['OK']:
+#                 self.log.error("Failed to set status to failed:", res["Message"])
+#             return S_ERROR("Failed loading from pickle")
+        os.rename(self.InputFile, self.jobName+".dat")
+        res = self.simudb.sendResult(self.jobName+".dat")
         if not res["OK"]:
             self.log.error("Failed to send the results:", res["Message"])
             res = self.simudb.setStatus(self.jobName, "failed", "Cannot send results: %s" % res["Message"])
