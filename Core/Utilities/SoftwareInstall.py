@@ -164,9 +164,10 @@ class SoftwareInstall(object):
             
         deps_list = []
         #try to rsync app vX, use overwrite flag
+        gLogger.verbose("Apps to install:", str(self.apps))
         for app in self.apps:
-            name = app.split(".")[0]
-            version = app.split(".")[1]
+            name = app[0]
+            version = app[1]
             res = resolveDeps(name, version)
             if not res['OK']:
                 gLogger.error("Failed getting the dependencies:", res['Message'])
@@ -187,6 +188,7 @@ class SoftwareInstall(object):
                 gLogger.info("Installing %s %s with" % (name, version), comm)
                 script.write(comm)
                 script.write("exit $?\n")
+            os.chmod(fpath, 0755)    
             comm = ["sh", "-c", fpath]            
             try:
                 subprocess.check_call(comm)
