@@ -13,6 +13,8 @@ import subprocess
 from math import log
 import tempfile
 from ALDIRAC.Core.Utilities.SoftwareDependencies import resolveDeps
+import pkg_resources
+from pkg_resources import DistributionNotFound
 
 def WasteCPUCycles(timecut):
     """ Waste, waste, and waste more CPU.
@@ -89,6 +91,25 @@ def clearLock(lockname):
         return S_ERROR("Failed to clear lock: %s" % (str(error)) )
     return S_OK()
 
+def exists(software):
+    """ Check if a given software was already installed with pip
+    """
+    found = False
+    try:
+        cur_vers = pkg_resources.get_distribution(software["name"]).version
+        gLogger.info("Found %s version %s installed" % (software["name"], cur_vers))
+        if cur_vers == software["version"]:
+            found = True
+        else:
+            gLogger.warn("Version mismatch: %s installed, %s required" % (cur_vers, software["name"]))
+    except DistributionNotFound:
+        #Nothing to do: software isn't found
+        pass
+    
+    if found:
+        gLogger.info("Correct version already installed")
+        return True
+    return False
 
 class SoftwareInstall(object):
     '''
@@ -178,6 +199,10 @@ class SoftwareInstall(object):
             
             if not os.path.exists("%s/%s/%s" % (os.environ["HOME"], name, version)):
                 os.makedirs("%s/%s/%s" % (os.environ["HOME"], name, version))
+            else:
+                #The application already exists here, no need to rsync
+                gLogger.info("%s %s already exists locally, will check dependencies" % (name, version))
+                continue
             fpath = os.path.join(dtemp, "script_%s.sh" % name)
             with open(fpath, "w") as script:
                 script.write("#!/bin/bash\n")
@@ -199,7 +224,12 @@ class SoftwareInstall(object):
 
         #Now install the dependencies        
         packages = []
+        to_install = []
         for dep in deps_list:
+            #dependencies are installed in the pythonpath, they should be visible here if they are here
+            if exists(dep):
+                continue
+            to_install.append(dep)
             fpath = os.path.join(dtemp, "rsync%s.sh" % dep['name'])
             with open(fpath, "w") as script:
                 script.write("#!/bin/bash\n")
@@ -224,10 +254,11 @@ class SoftwareInstall(object):
             packages.append("-f")
             packages.append("file://%s/Packages/%s" % (os.environ["HOME"], dep["name"]))
         #now that the local cache is up to date, install the packages.
-        for dep in deps_list:
-            comm = ["pip", "install", dep['name']]
+        for dep in to_install:
+            #No need to check again existence
+            comm = ["pip", "install", "%s==%s" % (dep['name'], dep["version"])]
             comm.extend(packages)
-            comm.extend(["--allow-all-external", "-U"])
+            comm.extend(["--allow-all-external"])
             try:
                 gLogger.notice("Installing %s with" % dep["name"], " ".join(comm))
                 subprocess.check_call(comm)
