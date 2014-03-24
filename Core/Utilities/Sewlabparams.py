@@ -355,7 +355,7 @@ class SewLabParams (object, SewSpecialNames):
     """Class grouping together all the sewlab parameter sections."""
 
     def __init__(self, auto_init=True):
-        if auto_init is True:
+        if auto_init:
             # initialize the instance with the old parameters
             self.__attrs__ = ['materials']
             self.__setattr__('materials', SewLabParamTextBlock('materials', dummy_material_params))

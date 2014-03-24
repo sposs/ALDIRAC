@@ -8,6 +8,7 @@ from DIRAC                               import S_OK, S_ERROR, gLogger
 from DIRAC.Core.Utilities.Subprocess     import shellCall
 import os
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
+from DIRAC.Core.Utilities.Os import which
 
 class SewlabPostProcess(ModuleBase):
     '''
@@ -40,17 +41,19 @@ class SewlabPostProcess(ModuleBase):
         if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
             self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
             return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
-        bin_name = self.ops.getValue("SewLab/ConverterName", "al_sewlabwrapper_convert")
+        bin_name = self.ops.getValue("SewLab/ConverterName", "sewlabwrapper_convert")
         sewlabconv_path = self.ops.getValue("SharedArea", "")
-        fin_path = os.path.join(sewlabconv_path, bin_name)
         if not sewlabconv_path:
             self.log.error("Path to the converter not defined")
             return S_ERROR("Failed to find converter")
-        elif not os.path.exists(fin_path):
-            self.log.error("Coudn't find the converter")
-            return S_ERROR("Failed to find converter")
-        else:
-            self.log.info("Found converter at", fin_path)
+        fin_path = os.path.join(sewlabconv_path, bin_name)
+        if not os.path.exists(fin_path):
+            fin_path = which(bin_name)
+            if not fin_path:
+                self.log.error("Coudn't find the converter")
+                return S_ERROR("Failed to find converter")
+        
+        self.log.info("Found converter at", fin_path)
             
         scriptName = '%s_Run_%s.sh' % (self.applicationName, self.STEP_NUMBER)
         with open(scriptName, "w") as script:

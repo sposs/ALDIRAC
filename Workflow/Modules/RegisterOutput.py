@@ -7,7 +7,7 @@ from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC.Core.Utilities.ReturnValues import S_OK, S_ERROR
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 from DIRAC import gLogger
-import pickle
+#import pickle
 import os
 class RegisterOutput(ModuleBase):
     def __init__(self):

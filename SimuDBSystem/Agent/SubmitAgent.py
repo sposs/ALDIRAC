@@ -16,6 +16,10 @@ from DIRAC.DataManagementSystem.Client.ReplicaManager import ReplicaManager
 import os
 from simudb.db.simu_interface import SimuInterface
 from simudb.helpers.script_base import create_connection
+from sewlabwrapper.utils import sewlabparams
+from ALDIRAC.Core.Utilities.Sewlabparams import SewLabParams
+from xml.etree.ElementTree import tostring
+from simudb.mappings.combined import CombinedInterface
 
 
 __RCSID__ = '$Id: $'
@@ -36,18 +40,25 @@ class SubmitAgent( AgentModule ):
                                    "Automatically submitted tasks", 
                                    "SimuDB Monitoring", "Tasks",
                                    gMonitor.OP_ACUM )
-        self.simudb = SimuInterface(create_connection())
+        testmode = self.am_getOption("TestMode", False)
+        self.store_output = self.am_getOption("StoreOutput", True)
+        self.simudb = SimuInterface(create_connection(testmode = testmode))
+        self.combined = CombinedInterface(create_connection(testmode = testmode))
+        
         return S_OK()
     
     def execute(self):
         res = self._get_new_tasks()
         if not res["OK"]:
             self.log.error("Failed getting the simulations to submit")
+            self.simudb.close_session()
             return res
         res = self._submit(res['Value'])
         if not res["OK"]:
             gLogger.error("Submission of simulations failed")
+            self.simudb.close_session()
             return res
+        self.simudb.close_session()
         return S_OK()
     
     def _get_new_tasks(self):
@@ -58,45 +69,45 @@ class SubmitAgent( AgentModule ):
         """
         try:
             #TODO: make sure the simu groups that have no simulations are still returned so that they get their final status
-            simusdict = self.simudb.get_simulations_with_status_in_group_with_status(status = ["new"], gstat = ["new", "submitting"])
+            simusdict = self.simudb.get_runs_with_status_in_group_with_status(status = ["new"], gstat = ["new", "submitting"])
+            ## session is opened
         except:
             return S_ERROR("Couldn't get the simu dict")
         simus_ids = {}
         for simugroupid in simusdict.keys():
-            #TODO: handle priorities
             if not simugroupid in simus_ids:
                 simus_ids[simugroupid] = []
-            if self.simudb.get_simulationgroup_status(simugroupid) == "new":
+            if self.simudb.get_rungroup_status(simugroupid) == "new":
                 res = self._handle_defaultXML(simugroupid)
                 if not res["OK"]:
                     self.log.error("Failed to upload default XML for the group \n   Won't submit anything!")
                     continue
-            sim = simusdict[simugroupid]["simulations"]
-            if not sim:
-                gLogger.info("Simugroup doesn't have any jobs to submit")
-                self.simudb.set_simulationgroup_status(simugroupid, "submitted")
+            sims = simusdict[simugroupid]["simulations"]
+            if not sims:
+                gLogger.info("RunGroup doesn't have any jobs to submit")
+                self.simudb.set_rungroup_status(simugroupid, "submitted")
                 continue
-            simus_ids[simugroupid].append(sim)
+            simus_ids[simugroupid].extend(sims)
         return S_OK(simus_ids)
     
     def _handle_defaultXML(self, simugroupid):
         """ Upload the default XML for this group
         """
-        input_xml_content = self.simudb.get_simulationgroup_xml(simugroupid)
-        input_xml = "./default.xml"
-        with open(input_xml, "w") as xml_file:
-            #TODO: depending on the type of input_xml_content, convert to string
-            xml_file.write(input_xml_content)
-        
+        input_xml = self.combined.get_rungroup_fullxml(simugroupid)
+        #TODO: This missed still the Script parameters. Where to put them?
+        input_xml_file = "./default.xml"
+        with open(input_xml_file, "w") as xml_file:
+            xml_file.write(tostring(input_xml))
+        self.simudb.close_session()#because the following can take time
         basepath = "/alpeslasers/simu/"
         final_path  = os.path.join(basepath, simugroupid, "default.xml")
         rm = ReplicaManager()
-        res = rm.putAndRegister(final_path, input_xml, "AL-DIP")
+        res = rm.putAndRegister(final_path, input_xml_file, "AL-DIP")
         if not res["OK"]:
             self.log.error("Failed to upload default.xml to SE:", res["Message"])
             return S_ERROR("Failed to upload default xml")
-        os.unlink(input_xml)
-        self.simudb.set_simulationgroup_path(final_path)
+        os.unlink(input_xml_file)
+        self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
         return S_OK()
     
     def _submit(self, simulations):
@@ -113,7 +124,7 @@ class SubmitAgent( AgentModule ):
         gLogger.info( "_submit: Tasks will be submitted with the credentials %s:%s" % ( owner, ownerGroup ) )
         for simgroupid, simulations_id in simulations.items():
             for simid in simulations_id:
-                res = self._make_job(simid)
+                res = self._make_job(simgroupid, simid)
                 if not res["OK"]:
                     self.log.error("Failed to make task", res['Message'])
                     continue
@@ -127,35 +138,37 @@ class SubmitAgent( AgentModule ):
                     self.log.error("Failed submitting task", res["Message"])
                     continue
                 jobid = res["Value"]
-                self.simudb.set_simulation_status(simid, "waiting")
+                self.simudb.set_run_status(simid, "waiting")
                 self.simudb.set_jobid(simid, jobid)
                 os.unlink("jobDescription.xml")
-            self.simudb.set_simulationgroup_status(simgroupid, "submitting")
+            self.simudb.set_rungroup_status(simgroupid, "submitting")
         return S_OK()
     
-    def _make_job(self, simid):
+    def _make_job(self, simgroupid, simid):
         """ Make a job given the input simulation
         """
         job = UserJob()
         #here, get CPUTime, type (version) from sim
-        simu_group = self.simudb.get_simulation_group(simid)
-        job.setJobGroup(simu_group)
+        job.setJobGroup(str(simgroupid))
+        job.setPriority(self.simudb.get_rungroup_priority(simgroupid))
         job.setName("%s" % (simid))#This is important for the status setting, and output registration
-        #TODO: get from the XML or simulation the app properties such as name/version
+        runtype, version = self.simudb.get_run_type_version(simid)
         app_dict = {}
-        app_dict[""] = ""
+        app_dict[runtype] = version
         res = get_app_list(app_dict)
         if not res["OK"]:
             self.log.error("Couldn't get the applications:", res["Message"])
             return res
         for app in res["Value"]:
             if app.appname.lower() == "sewlab":
-                path = self.simudb.get_simulationgroup_path(simu_group)
+                path = self.simudb.get_rungroup_lfnpath(simgroupid)
                 app.setSteeringFile("LFN:"+path)
-                #app.setSomething() #the XML diff WRT the original file
-                job.setOutputData(["*.pkl"], 
-                                  "%s/s" % (simu_group, simid), 
-                                  "AL-DIP")
+                my_params = self.simudb.get_sewlabrun_parameters(simid)
+                app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
+                if self.store_output:
+                    job.setOutputData(["*.pkl"], 
+                                      "%s/s" % (simgroupid, simid), 
+                                      "AL-DIP")
             res = job.append(app)
             if not res['OK']:
                 gLogger.error("Error adding task:", res['Message'])

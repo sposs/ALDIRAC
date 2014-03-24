@@ -3,16 +3,25 @@ Created on Mar 5, 2014
 
 @author: stephanep
 '''
-from DIRAC.Core.DISET.RequestHandler import RequestHandler
+from DIRAC.Core.DISET.RequestHandler import RequestHandler, getServiceOption
 from DIRAC import gLogger, S_OK, S_ERROR
 import pickle
 import types
+from simudb.db.simu_interface import SimuInterface
+from simudb.helpers.script_base import create_connection
+import tempfile
+import os
 
-gSimuDB = False
+gSimuDB = None
+BASE_PATH = ""
 def initializeSimuDBHandler( serviceInfo ):
     global gSimuDB
-    
-state_transitions = {"new": ["waiting"], "waiting": ["running"], "running": ["running", "done", "failed"], "done": [], "failed": []}
+    global BASE_PATH
+    testmode = getServiceOption( serviceInfo, "TestMode", False)
+    gSimuDB = SimuInterface(create_connection(testmode = testmode))
+    BASE_PATH = tempfile.mkdtemp()
+    return S_OK()
+
 class SimuDBHandler(RequestHandler):
     """ Simple service that inserts the simulation results into the DB
     """ 
@@ -25,20 +34,82 @@ class SimuDBHandler(RequestHandler):
             return S_ERROR("Failed converting the data")
         simu_id = int(simuid)
         try: 
-            status = gSimuDB.get_simulation_status(simu_id)
+            status = gSimuDB.get_run_status(simu_id)#session is opened
         except:
+            gSimuDB.close_session()
             return S_ERROR("Failed getting the status")
         if status in ["done", "failed"]:
+            gSimuDB.close_session()
             return S_ERROR("Cannot insert result, job is already completed")
         try:
-            gSimuDB.set_simulation_result(pickle.dump(res_dict))
+            gSimuDB.set_run_result(pickle.dump(res_dict))
         except Exception as error:
-            gSimuDB.set_simulation_status(simu_id, "failed", "Failed to insert result: %s" % str(error))
+            gSimuDB.set_run_status(simu_id, "failed", 
+                                          "Failed to insert result: %s" % str(error))
+            gSimuDB.close_session()
             return S_ERROR("Failed to insert result")
         try:
-            gSimuDB.set_simulation_status(simu_id, "done")
+            gSimuDB.set_run_status(simu_id, "done")
+        except:
+            gSimuDB.close_session()
+            return S_ERROR("Failed reporting status")
+        gSimuDB.close_session()
+        return S_OK()
+
+    def transfer_fromClient( self, fileID, token, fileSize, fileHelper ):
+        """ Method to receive file from clients.
+        fileID is the local file name in the SE.
+        fileSize can be Xbytes or -1 if unknown.
+        token is used for access rights confirmation.
+        """
+        simu_id = int(fileID.replace(".dat",""))
+        try: 
+            status = gSimuDB.get_run_status(simu_id)#session is opened
+        except:
+            gSimuDB.close_session()
+            return S_ERROR("Failed getting the status")
+        if status in ["done", "failed"]:
+            gSimuDB.close_session()
+            return S_ERROR("Cannot insert result, job is already completed")
+        gSimuDB.close_session()
+        file_path = os.path.join(BASE_PATH, fileID)
+        fileHelper.disableCheckSum()
+        try:
+            fd = open( file_path, "wb" )
+        except Exception, error:
+            return S_ERROR( "Cannot open to write destination file %s: %s" % ( file_path, str( error ) ) )
+        result = fileHelper.networkToDataSink( fd )
+        if not result[ 'OK' ]:
+            return result
+        fd.close()
+        
+        try:
+            gSimuDB.set_run_result(simu_id, open(file_path, "rb").read())
+            os.unlink(file_path)
+        except Exception as error:
+            gSimuDB.set_run_status(simu_id, "failed", 
+                                          "Failed to insert result: %s" % str(error))
+            return S_ERROR("Failed to insert result")
+        try:
+            gSimuDB.set_run_status(simu_id, "done")
         except:
             return S_ERROR("Failed reporting status")
+        return S_OK()
+
+    def transfer_toClient( self, fileID, token, fileHelper ):
+        """ Do nothing, needed for TransferClient interface
+        """
+        return S_OK()
+    
+    def transfer_bulkFromClient( self, fileID, token, ignoredSize, fileHelper ):
+        """ Receive files packed into a tar archive by the fileHelper logic.
+        token is used for access rights confirmation.
+        """
+        return S_OK()
+    
+    def transfer_bulkToClient( self, fileId, token, fileHelper ):
+        """ Do nothing, needed for TransferClient interface
+        """
         return S_OK()
     
     types_setStatus = [types.StringType, types.StringTypes]
@@ -46,13 +117,11 @@ class SimuDBHandler(RequestHandler):
         """ Set the task status
         """
         simu_id = int(simuid)
-        current_status = gSimuDB.get_simulation_status(simu_id)
-        if not status in state_transitions[current_status]:
-            gLogger.error("Invalid transition")
-            return {"OK": False, "Message": "Invalid transition from %s to %s" % (current_status, status), "Status": current_status}
         try:
-            gSimuDB.set_simulation_status(simu_id, status, message)
+            gSimuDB.set_run_status(simu_id, status, message)
         except Exception as error:
+            gSimuDB.close_session()
             return S_ERROR("Failed to set new status %s: %s" % (status, str(error)))
+        gSimuDB.close_session()
         return S_OK(status)
         
