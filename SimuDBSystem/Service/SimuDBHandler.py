@@ -14,6 +14,9 @@ import os
 
 gSimuDB = None
 BASE_PATH = ""
+
+__RCSID__ = "$Id"
+
 def initializeSimuDBHandler( serviceInfo ):
     global gSimuDB
     global BASE_PATH
