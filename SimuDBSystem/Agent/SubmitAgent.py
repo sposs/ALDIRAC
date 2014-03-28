@@ -132,6 +132,10 @@ class SubmitAgent( AgentModule ):
                     continue
                 oJob = res['Value']
                 oJob._addToWorkflow()
+                resolvedFiles = oJob._resolveInputSandbox( oJob.inputsandbox )
+                fileList = ";".join( resolvedFiles )
+                description = 'Input sandbox file list'
+                oJob._addParameter( oJob.workflow, 'InputSandbox', 'JDL', fileList, description )
                 workflowFile = open( "jobDescription.xml", 'w' )
                 workflowFile.write( oJob._toXML() )
                 workflowFile.close()
