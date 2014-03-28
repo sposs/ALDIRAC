@@ -100,7 +100,7 @@ dummy_material_params = """materials {
 buildpot_params = {
     'name':'buildpot-params',
     'params':[
-        {'name':'bulk-step', 'value':1, 'state':True},
+        {'name':'bulk-step', 'value':1., 'state':True},
         {'name':'interface-step', 'value':0.01, 'state':True},
         {'name':'interface-diffusion', 'value':0.0, 'state':True},
         {'name':'mesh-style', 'value':'fixed-step', 'state':True},
@@ -117,7 +117,7 @@ buildpot_params = {
         },
         {'name':'phony-right-barrier', 'value':'AUTO', 'state':True, 'subparams':{ \
             'right-barrier':[
-                {'name':'thickness', 'value':350, 'state':True},
+                {'name':'thickness', 'value':350., 'state':True},
                 {'name':'material', 'value':'AlInAs', 'state':True},
                 {'name':'label', 'value':'"right phony"', 'state':True},
                 {'name':'x', 'value':0.48, 'state':False},
