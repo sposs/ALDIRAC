@@ -131,6 +131,7 @@ class SubmitAgent( AgentModule ):
                     self.log.error("Failed to make task", res['Message'])
                     continue
                 oJob = res['Value']
+                oJob._addToWorkflow()
                 workflowFile = open( "jobDescription.xml", 'w' )
                 workflowFile.write( oJob._toXML() )
                 workflowFile.close()
