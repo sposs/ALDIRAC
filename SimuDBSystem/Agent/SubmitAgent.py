@@ -15,11 +15,10 @@ from ALDIRAC.Interfaces.API.Applications              import get_app_list
 from DIRAC.DataManagementSystem.Client.ReplicaManager import ReplicaManager
 import os
 from simudb.db.simu_interface import SimuInterface
+from simudb.db.combined import CombinedInterface
 from simudb.helpers.script_base import create_connection
-from sewlabwrapper.utils import sewlabparams
-from ALDIRAC.Core.Utilities.Sewlabparams import SewLabParams
 from xml.etree.ElementTree import tostring
-from simudb.mappings.combined import CombinedInterface
+from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 
 
 __RCSID__ = '$Id: $'
@@ -44,6 +43,10 @@ class SubmitAgent( AgentModule ):
         self.store_output = self.am_getOption("StoreOutput", True)
         self.simudb = SimuInterface(create_connection(testmode = testmode))
         self.combined = CombinedInterface(create_connection(testmode = testmode))
+        self.destination_sites = {}
+        self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite")
+        self.cpu_times = {}
+        self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
         
         return S_OK()
     
@@ -94,7 +97,6 @@ class SubmitAgent( AgentModule ):
         """ Upload the default XML for this group
         """
         input_xml = self.combined.get_rungroup_fullxml(simugroupid)
-        #TODO: This missed still the Script parameters. Where to put them?
         input_xml_file = "./default.xml"
         with open(input_xml_file, "w") as xml_file:
             xml_file.write(tostring(input_xml))
@@ -152,6 +154,7 @@ class SubmitAgent( AgentModule ):
         job.setJobGroup(str(simgroupid))
         job.setPriority(self.simudb.get_rungroup_priority(simgroupid))
         job.setName("%s" % (simid))#This is important for the status setting, and output registration
+        jobtype = ""
         runtype, version = self.simudb.get_run_type_version(simid)
         app_dict = {}
         app_dict[runtype] = version
@@ -161,6 +164,7 @@ class SubmitAgent( AgentModule ):
             return res
         for app in res["Value"]:
             if app.appname.lower() == "sewlab":
+                jobtype = "sewlab"
                 path = self.simudb.get_rungroup_lfnpath(simgroupid)
                 app.setSteeringFile("LFN:"+path)
                 my_params = self.simudb.get_sewlabrun_parameters(simid)
@@ -173,5 +177,9 @@ class SubmitAgent( AgentModule ):
             if not res['OK']:
                 gLogger.error("Error adding task:", res['Message'])
                 return S_ERROR("Failed adding application %s" % app.appname)
+
+        job.setDestination(self.destination_sites[jobtype])
+        job.setCPUTime(self.cpu_times[jobtype])
+        
         return S_OK(job)
     
