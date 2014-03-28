@@ -175,7 +175,6 @@ class SewLab(ModuleBase):
                 final_tree.write(self.SteeringFile)
             except Exception as error:
                 self.log.error("Failed to parse the XML file:", str(error))
-                raise
                 return S_ERROR("Failed to parse the XML file")
         
         return S_OK()
