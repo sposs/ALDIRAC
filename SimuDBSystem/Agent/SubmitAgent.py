@@ -171,7 +171,7 @@ class SubmitAgent( AgentModule ):
                 app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
                 if self.store_output:
                     job.setOutputData(["*.pkl"], 
-                                      "%s/s" % (simgroupid, simid), 
+                                      "%s/%s" % (simgroupid, simid), 
                                       "AL-DIP")
             res = job.append(app)
             if not res['OK']:
