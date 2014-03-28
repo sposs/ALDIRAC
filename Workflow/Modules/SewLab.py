@@ -63,6 +63,8 @@ class SewLab(ModuleBase):
             self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
             return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)        
 
+        self.SteeringFile = os.path.basename(self.SteeringFile)
+
         res = self._altersample()
         if not res['OK']:
             self.log.error("Failed to change the file")
