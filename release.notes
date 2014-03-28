@@ -1,3 +1,7 @@
+[v0r0p10]
+
+Sewlab now uses the parser from sewlabwrapper
+
 [v0r0p8]
 
 Fix the parameter types in sewlab
