@@ -102,7 +102,7 @@ class SubmitAgent( AgentModule ):
             xml_file.write(tostring(input_xml))
         self.simudb.close_session()#because the following can take time
         basepath = "/alpeslasers/simu/"
-        final_path  = os.path.join(basepath, simugroupid, "default.xml")
+        final_path  = os.path.join(basepath, str(simugroupid), "default.xml")
         rm = ReplicaManager()
         res = rm.putAndRegister(final_path, input_xml_file, "AL-DIP")
         if not res["OK"]:
