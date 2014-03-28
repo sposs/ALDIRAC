@@ -6,12 +6,12 @@ Created on Feb 6, 2014
 from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC import S_OK, S_ERROR, gLogger
 from DIRAC.Core.Utilities.Subprocess                      import shellCall
-from ALDIRAC.Core.Utilities.SewlabparamsParser import sewlab_xml_parser
 import os
 
 from xml.etree import ElementTree
 from xml.etree.ElementTree import SubElement
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
+from sewlabwrapper.utils.sewlabparams_parser import sewlab_xml_parser
 
 class SewLab(ModuleBase):
     def __init__(self):
