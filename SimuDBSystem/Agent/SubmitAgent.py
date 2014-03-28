@@ -171,6 +171,7 @@ class SubmitAgent( AgentModule ):
         if not res["OK"]:
             self.log.error("Couldn't get the applications:", res["Message"])
             return res
+        failed = False
         for app in res["Value"]:
             if app.appname.lower() == "sewlab":
                 jobtype = "sewlab"
@@ -178,7 +179,7 @@ class SubmitAgent( AgentModule ):
                 path = path.strip()
                 if not path:
                     self.log.error("LFN Path is empty, not submitting")
-                    continue
+                    failed = True
                 app.setSteeringFile("LFN:"+path)
                 my_params = self.simudb.get_sewlabrun_parameters(simid)
                 app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
@@ -190,7 +191,8 @@ class SubmitAgent( AgentModule ):
             if not res['OK']:
                 self.log.error("Error adding task:", res['Message'])
                 return S_ERROR("Failed adding application %s" % app.appname)
-
+        if failed:
+            return S_ERROR("Failed adding the applications")
         job.setDestination(self.destination_sites[jobtype])
         job.setCPUTime(self.cpu_times[jobtype])
         
