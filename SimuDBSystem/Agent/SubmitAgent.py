@@ -5,7 +5,7 @@ Created on Mar 6, 2014
 
 @author: stephanep
 '''
-from DIRAC                                            import S_OK, S_ERROR, gLogger
+from DIRAC                                            import S_OK, S_ERROR
 from DIRAC                                            import gMonitor
 from DIRAC.Core.Base.AgentModule                      import AgentModule
 from DIRAC.Core.Security.ProxyInfo                    import getProxyInfo
@@ -58,7 +58,7 @@ class SubmitAgent( AgentModule ):
             return res
         res = self._submit(res['Value'])
         if not res["OK"]:
-            gLogger.error("Submission of simulations failed")
+            self.log.error("Submission of simulations failed")
             self.simudb.close_session()
             return res
         self.simudb.close_session()
@@ -77,6 +77,7 @@ class SubmitAgent( AgentModule ):
         except:
             return S_ERROR("Couldn't get the simu dict")
         simus_ids = {}
+        total_tasks = 0 
         for simugroupid in simusdict.keys():
             if not simugroupid in simus_ids:
                 simus_ids[simugroupid] = []
@@ -87,10 +88,12 @@ class SubmitAgent( AgentModule ):
                     continue
             sims = simusdict[simugroupid]["simulations"]
             if not sims:
-                gLogger.info("RunGroup doesn't have any jobs to submit")
+                self.log.info("RunGroup doesn't have any jobs to submit")
                 self.simudb.set_rungroup_status(simugroupid, "submitted")
                 continue
             simus_ids[simugroupid].extend(sims)
+            total_tasks += len(sims)
+        self.log.info("Found tasks to submit:", total_tasks)
         return S_OK(simus_ids)
     
     def _handle_defaultXML(self, simugroupid):
@@ -108,6 +111,7 @@ class SubmitAgent( AgentModule ):
         if not res["OK"]:
             self.log.error("Failed to upload default.xml to SE:", res["Message"])
             return S_ERROR("Failed to upload default xml")
+        self.log.info("Uploaded following file:", final_path )
         os.unlink(input_xml_file)
         self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
         return S_OK()
@@ -115,15 +119,15 @@ class SubmitAgent( AgentModule ):
     def _submit(self, simulations):
         """ Create and submit the tasks
         """
-        gLogger.info( "_submit: Submitting tasks" )
+        self.log.info( "_submit: Submitting tasks" )
         res = getProxyInfo( False, False )
         if not res['OK']:
-            gLogger.error( "_submit: Failed to determine credentials for submission", res['Message'] )
+            self.log.error( "_submit: Failed to determine credentials for submission", res['Message'] )
             return res
         proxyInfo = res['Value']
         owner = proxyInfo['username']
         ownerGroup = proxyInfo['group']
-        gLogger.info( "_submit: Tasks will be submitted with the credentials %s:%s" % ( owner, ownerGroup ) )
+        self.log.info( "_submit: Tasks will be submitted with the credentials %s:%s" % ( owner, ownerGroup ) )
         for simgroupid, simulations_id in simulations.items():
             for simid in simulations_id:
                 res = self._make_job(simgroupid, simid)
@@ -180,7 +184,7 @@ class SubmitAgent( AgentModule ):
                                       "AL-DIP")
             res = job.append(app)
             if not res['OK']:
-                gLogger.error("Error adding task:", res['Message'])
+                self.log.error("Error adding task:", res['Message'])
                 return S_ERROR("Failed adding application %s" % app.appname)
 
         job.setDestination(self.destination_sites[jobtype])
