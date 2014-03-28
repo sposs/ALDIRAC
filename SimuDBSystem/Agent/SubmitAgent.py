@@ -175,6 +175,10 @@ class SubmitAgent( AgentModule ):
             if app.appname.lower() == "sewlab":
                 jobtype = "sewlab"
                 path = self.simudb.get_rungroup_lfnpath(simgroupid)
+                path = path.strip()
+                if not path:
+                    self.log.error("LFN Path is empty, not submitting")
+                    continue
                 app.setSteeringFile("LFN:"+path)
                 my_params = self.simudb.get_sewlabrun_parameters(simid)
                 app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
