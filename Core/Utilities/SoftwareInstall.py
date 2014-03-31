@@ -201,8 +201,10 @@ class SoftwareInstall(object):
             
             if not os.path.exists("%s/%s/%s" % (os.environ["HOME"], name, version)):
                 os.makedirs("%s/%s/%s" % (os.environ["HOME"], name, version))
+                os.environ["APPLICATION_DIR"] = "%s/%s/%s" % (os.environ["HOME"], name, version)
             else:
                 #The application already exists here, no need to rsync
+                os.environ["APPLICATION_DIR"] = "%s/%s/%s" % (os.environ["HOME"], name, version)
                 gLogger.info("%s %s already exists locally, will check dependencies" % (name, version))
                 continue
             fpath = os.path.join(dtemp, "script_%s.sh" % name)
@@ -224,7 +226,7 @@ class SoftwareInstall(object):
                 clearLock(lockname)
                 return S_ERROR("Failed installation")
         
-            os.environ["APPLICATION_DIR"] = "%s/%s/%s" % (os.environ["HOME"], name, version)
+            
 
         #Now install the dependencies        
         packages = []
