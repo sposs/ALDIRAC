@@ -186,8 +186,11 @@ class SoftwareInstall(object):
         
         #cleanup in case needed
         if os.path.isdir("/tmp/pip_build_dirac"):
-            os.rmdir("/tmp/pip_build_dirac")
-        
+            try:
+                os.rmdir("/tmp/pip_build_dirac")
+            except OSError:
+                gLogger.error("Failed to delete the directory, hope it will succeed anyway")
+                
         deps_list = []
         #try to rsync app vX, use overwrite flag
         gLogger.verbose("Apps to install:", str(self.apps))
