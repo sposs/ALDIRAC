@@ -254,7 +254,7 @@ class SoftwareInstall(object):
             
             packages.append("-f")
             packages.append("file://%s/Packages/%s" % (os.environ["HOME"], dep["name"]))
-        self.log.info("which pip:", which("pip"))
+        gLogger.info("which pip:", which("pip"))
         #now that the local cache is up to date, install the packages.
         for dep in to_install:
             #No need to check again existence
