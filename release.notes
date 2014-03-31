@@ -1,3 +1,7 @@
+[v0r0p29]
+
+Catch possible exception when deleting the pip build directory
+
 [v0r0p28]
 
 Fix typo
