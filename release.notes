@@ -1,3 +1,7 @@
+[v0r0p25]
+
+Cleanup if needed the pip stuff
+
 [v0r0p24]
 
 Fix the simudbclient interface, add *.log in OSB
