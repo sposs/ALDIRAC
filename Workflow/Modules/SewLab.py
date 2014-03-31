@@ -89,10 +89,10 @@ class SewLab(ModuleBase):
         
         comm = 'sh -c "./%s"' % (scriptName)
         self.setApplicationStatus('%s %s step %s' % (self.applicationName, self.applicationVersion, self.STEP_NUMBER))
-        res = self.simudb.set_status(self.jobName, "running")
+        res = self.simudb.setStatus(self.jobName, "running")
         if not res['OK']:
             self.log.error("Failed to set status to running:", res["Message"])
-            res = self.simudb.set_status(self.jobName, "running")
+            res = self.simudb.setStatus(self.jobName, "running")
             if not res['OK']:
                 self.log.error("Failed again to set status to running:", res["Message"])
                 self.log.error("Will fail the task")

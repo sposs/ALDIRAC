@@ -71,13 +71,13 @@ class SewlabPostProcess(ModuleBase):
         result = shellCall(0, comm, callbackFunction = self.redirectLogOutput, bufferLimit = 20971520)
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
-            res = self.simudb.set_status(self.jobName, "failed", "Error while executing converter" )
+            res = self.simudb.setStatus(self.jobName, "failed", "Error while executing converter" )
             if not res["OK"]:
                 self.log.error("Failed updating task status:", res["Message"])
             return S_ERROR('Problem Executing Application')
         
         if not os.path.exists(self.OutputFile):
-            res = self.simudb.set_status(self.jobName, "failed", "Missing converter output")
+            res = self.simudb.setStatus(self.jobName, "failed", "Missing converter output")
             if not res["OK"]:
                 self.log.error("Failed updating task status:", res["Message"])
             return S_ERROR("Output file not produced")
