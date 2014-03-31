@@ -1,3 +1,7 @@
+[v0r0p15]
+
+Add a source bashrc just in case the env isn't complete
+
 [v0r0p14]
 
 Change the way packages are installed with pip
