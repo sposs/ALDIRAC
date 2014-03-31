@@ -184,7 +184,10 @@ class SoftwareInstall(object):
             return res
         dtemp = tempfile.mkdtemp()
         
-            
+        #cleanup in case needed
+        if os.path.isdir("/tmp/pip_build_dirac"):
+            os.rmdir("/tmp/pip_build_dirac")
+        
         deps_list = []
         #try to rsync app vX, use overwrite flag
         gLogger.verbose("Apps to install:", str(self.apps))
