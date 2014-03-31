@@ -47,7 +47,7 @@ class SubmitAgent( AgentModule ):
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite")
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
-        
+        self.verbosity = Operations().getValue("JobVerbosity", "INFO")
         return S_OK()
     
     def execute(self):
@@ -196,5 +196,6 @@ class SubmitAgent( AgentModule ):
         job.setDestination(self.destination_sites[jobtype])
         job.setCPUTime(self.cpu_times[jobtype])
         job.setOutputSandbox(["*.log", "*.sample", "*.script"])
+        job.setLogLevel(self.verbosity)
         return S_OK(job)
     
