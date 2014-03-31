@@ -1,3 +1,7 @@
+[v0r0p14]
+
+Change the way packages are installed with pip
+
 [v0r0p13]
 
 Add a which python for debugging
