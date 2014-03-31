@@ -1,3 +1,7 @@
+[v0r0p17]
+
+Add pip --version to pip.log
+
 [v0r0p16]
 
 Add dump of env
