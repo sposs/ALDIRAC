@@ -16,6 +16,7 @@ from ALDIRAC.Core.Utilities.SoftwareDependencies import resolveDeps
 import pkg_resources
 from pkg_resources import DistributionNotFound
 from DIRAC.Core.Utilities.Os import which
+import DIRAC
 
 def WasteCPUCycles(timecut):
     """ Waste, waste, and waste more CPU.
@@ -265,6 +266,7 @@ class SoftwareInstall(object):
             fname = os.path.join(dtemp, "run.sh")
             with open(fname, "w") as script:
                 script.write("!/bin/bash\n")
+                script.write("source %s/bashrc\n" % DIRAC.rootPath)
                 gLogger.notice("Installing %s with" % dep["name"], " ".join(comm))
                 script.write(" ".join(comm) + "\n")
                 script.write("exit $?\n")
