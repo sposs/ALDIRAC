@@ -195,6 +195,6 @@ class SubmitAgent( AgentModule ):
             return S_ERROR("Failed adding the applications")
         job.setDestination(self.destination_sites[jobtype])
         job.setCPUTime(self.cpu_times[jobtype])
-        job.setOutputSandbox("*.log")
+        job.setOutputSandbox(["*.log", "*.sample", "*.script"])
         return S_OK(job)
     
