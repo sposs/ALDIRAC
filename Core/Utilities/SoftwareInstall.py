@@ -268,7 +268,7 @@ class SoftwareInstall(object):
                 script.write("#!/bin/bash\n")
                 script.write("source %s/bashrc\n" % DIRAC.rootPath)
                 script.write("env > /tmp/localenv.log\n")
-                #script.write("pip install pip -U\n")
+                script.write("python %s/ALDIRAC/Core/Utilities/get-pip.py\n" % DIRAC.rootPath)
                 script.write("pip --version > /tmp/pip.log\n")
                 gLogger.notice("Installing %s with" % dep["name"], " ".join(comm))
                 script.write(" ".join(comm) + "\n")
