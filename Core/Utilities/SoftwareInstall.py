@@ -244,7 +244,7 @@ class SoftwareInstall(object):
             os.chmod(fpath, 0755)
             # try to rsync Packages
             #assumming the key is located in $HOME/.ssh/id_dsa
-            comm = ["sh", '-c', fpath]
+            comm = ["sh", '-c', fpath]  
             try:
                 subprocess.check_call(comm)
             except subprocess.CalledProcessError:
@@ -262,9 +262,15 @@ class SoftwareInstall(object):
             comm = ["pip", "install", "%s==%s" % (dep['name'], dep["version"])]
             comm.extend(packages)
             comm.extend(["--allow-all-external"])
-            try:
+            fname = os.path.join(dtemp, "run.sh")
+            with open(fname, "w") as script:
+                script.write("!/bin/bash\n")
                 gLogger.notice("Installing %s with" % dep["name"], " ".join(comm))
-                subprocess.check_call(comm)
+                script.write(" ".join(comm) + "\n")
+                script.write("exit $?\n")
+            os.chmod(fname, 0755)
+            try:
+                subprocess.check_call(["sh", "-c", fname])
             except subprocess.CalledProcessError:
                 gLogger.error("Couldn't install %s" % dep["name"])
                 clearLock(lockname)
