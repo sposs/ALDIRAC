@@ -230,7 +230,7 @@ to upload the following files %s' % ', '.join(final.keys()))
                 self.log.info("Attempting to store file %s to the following SE(s):\n%s" % (fileName, 
                                                                                            ', '.join(metadata['resolvedSE'])))
                 result = failoverTransfer.transferAndRegisterFile(fileName, metadata['localpath'], metadata['lfn'],
-                                                                  metadata['rignoreapperrorsesolvedSE'], fileMetaDict = metadata, 
+                                                                  metadata['resolvedSE'], fileMetaDict = metadata, 
                                                                   fileCatalog = self.userFileCatalog)
                 if not result['OK']:
                     self.log.error('Could not transfer and register %s with metadata:\n %s' % (fileName, metadata))
