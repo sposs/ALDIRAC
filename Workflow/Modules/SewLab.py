@@ -185,8 +185,8 @@ class SewLab(ModuleBase):
         shared_area = self.ops.getValue("SharedArea", "/common/exe")
         real_bin_name = self.ops.getValue("SewLab/BinName", "sewlab_mono")
         real_bin_path = self.ops.getValue("SewLab/EC2Path", ["/home/ec2-user/", shared_area])
-        if "APPLICATION_DIR" in os.environ:
-            real_bin_path.append(os.environ["APPLICATION_DIR"])
+        if "%s_%s_DIR" %(self.applicationName, self.applicationVersion) in os.environ:
+            real_bin_path.append(os.environ["%s_%s_DIR" %(self.applicationName, self.applicationVersion)])
         for try_path in real_bin_path:
             real_path = os.path.join(try_path, real_bin_name)
             if not os.path.exists(real_path):
