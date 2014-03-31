@@ -1,3 +1,7 @@
+[v0r0p16]
+
+Add dump of env
+
 [v0r0p15]
 
 Add a source bashrc just in case the env isn't complete
