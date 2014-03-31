@@ -81,6 +81,8 @@ class SewlabPostProcess(ModuleBase):
             if not res["OK"]:
                 self.log.error("Failed updating task status:", res["Message"])
             return S_ERROR("Output file not produced")
+        else:
+            self.log.info("Successfully produced expected output:", self.OutputFile)
         return S_OK()
 
 #################################################################    

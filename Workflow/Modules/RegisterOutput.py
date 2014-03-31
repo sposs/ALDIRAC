@@ -43,8 +43,8 @@ class RegisterOutput(ModuleBase):
 #             if not res['OK']:
 #                 self.log.error("Failed to set status to failed:", res["Message"])
 #             return S_ERROR("Failed loading from pickle")
-        os.rename(self.InputFile[0], self.jobName+".dat")
-        res = self.simudb.sendResult(self.jobName+".dat")
+        os.rename(self.InputFile[0], self.jobName+".pkl")
+        res = self.simudb.sendResult(self.jobName+".pkl")
         if not res["OK"]:
             self.log.error("Failed to send the results:", res["Message"])
             res = self.simudb.setStatus(self.jobName, "failed", "Cannot send results: %s" % res["Message"])
