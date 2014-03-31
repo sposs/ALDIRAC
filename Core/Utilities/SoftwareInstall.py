@@ -267,6 +267,7 @@ class SoftwareInstall(object):
             with open(fname, "w") as script:
                 script.write("!/bin/bash\n")
                 script.write("source %s/bashrc\n" % DIRAC.rootPath)
+                script.write("env > /tmp/localenv.log|n")
                 gLogger.notice("Installing %s with" % dep["name"], " ".join(comm))
                 script.write(" ".join(comm) + "\n")
                 script.write("exit $?\n")
