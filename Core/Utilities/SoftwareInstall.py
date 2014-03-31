@@ -215,14 +215,16 @@ class SoftwareInstall(object):
                 gLogger.info("Installing %s %s with" % (name, version), comm)
                 script.write(comm)
                 script.write("exit $?\n")
-            os.chmod(fpath, 0755)    
-            comm = ["sh", "-c", fpath]            
+            os.chmod(fpath, 0755)
+            comm = ["sh", "-c", fpath]
             try:
                 subprocess.check_call(comm)
             except subprocess.CalledProcessError:
                 gLogger.error("Failed to install", "%s %s" % (name, version))
                 clearLock(lockname)
                 return S_ERROR("Failed installation")
+        
+            os.environ["APPLICATION_DIR"] = "%s/%s/%s" % (os.environ["HOME"], name, version)
 
         #Now install the dependencies        
         packages = []

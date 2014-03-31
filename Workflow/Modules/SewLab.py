@@ -76,14 +76,14 @@ class SewLab(ModuleBase):
             self.log.error("Failed to locate the sewlab executable")
             self.setApplicationStatus("Failed finding sewlab", True)
             return res 
-        sewlab_path, fin_path = res['Value']
+        fin_path = res['Value']
        
         extra_opts = "-o /Setup=Prod -o /Prod/SewlabPath=%s" % fin_path
         scriptName = '%s_%s_Run_%s.sh' % (self.applicationName, self.applicationVersion, self.STEP_NUMBER)
         with open(scriptName, "w") as script:
             script.write("#!/bin/bash\n")
             script.write("declare -x LD_LIBRARY_PATH=/lib/x86_64-linux-gnu/:$LD_LIBRARY_PATH\n")
-            script.write("%s -i %s %s\n" % (sewlab_path, self.SteeringFile, extra_opts))
+            script.write("sewlabwrapper -i %s %s\n" % (self.SteeringFile, extra_opts))
             script.write("exit $?\n")
         os.chmod(scriptName, 0755)
         
@@ -182,23 +182,20 @@ class SewLab(ModuleBase):
     def _path(self):
         """ Try to locate sewlab_mono
         """
-        bin_name = self.ops.getValue("SewLab/ALBinName", "al_sewlabwrapper")
-        path = self.ops.getValue("SewLab/EC2realPath", "/home/ec2-user/")
-        real_bin_name = self.ops.getValue("SewLab/BinName", "sewlab_mono")
-        real_bin_path = self.ops.getValue("SewLab/EC2Path", "/home/ec2-user/")
-        real_path = os.path.join(real_bin_path, real_bin_name)
-        if not os.path.exists(real_path):
-            self.log.error("Couldn't find the sewlab binary:", real_path)
-            return S_ERROR("Missing sewlab binary")
-        
-        f_path = os.path.join(path,bin_name)
-        if os.path.exists(f_path) and os.path.exists(real_path):
-            return S_OK((f_path, real_path))
-        
         shared_area = self.ops.getValue("SharedArea", "/common/exe")
-        f_path = os.path.join(shared_area, bin_name)
-        if os.path.exists(f_path) and os.path.exists(real_path):
-            return S_OK((f_path, real_path))
+        real_bin_name = self.ops.getValue("SewLab/BinName", "sewlab_mono")
+        real_bin_path = self.ops.getValue("SewLab/EC2Path", ["/home/ec2-user/", shared_area])
+        if "APPLICATION_DIR" in os.environ:
+            real_bin_path.append(os.environ["APPLICATION_DIR"])
+        for try_path in real_bin_path:
+            real_path = os.path.join(try_path, real_bin_name)
+            if not os.path.exists(real_path):
+                self.log.error("Couldn't find the sewlab binary at", real_path)
+                real_path = ""
+                continue
+                    
+        if os.path.exists(real_path):
+            return S_OK(real_path)
         
         return S_ERROR("Failed to find sewlab binary")
     
