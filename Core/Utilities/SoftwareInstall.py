@@ -257,6 +257,23 @@ class SoftwareInstall(object):
             packages.append("file://%s/Packages/%s" % (os.environ["HOME"], dep["name"]))
         gLogger.info("which pip:", which("pip"))
         gLogger.info("which python:", which("python"))
+        
+        if len(to_install):
+            # reinstall pip
+            fname = os.path.join(dtemp, "run.sh")
+            with open(fname, "w") as script:
+                script.write("#!/bin/bash\n")
+                script.write("source %s/bashrc\n" % DIRAC.rootPath)
+                script.write("python %s/ALDIRAC/Core/Utilities/get-pip.py\n" % DIRAC.rootPath)
+                script.write("pip --version > /tmp/pip.log\n")
+                script.write("exit $?\n")
+            os.chmod(fname, 0755)
+            try:
+                subprocess.check_call(["sh", "-c", fname])
+            except subprocess.CalledProcessError:
+                gLogger.error("Couldn't install pip")
+                clearLock(lockname)
+                return S_ERROR("Failed installation")
         #now that the local cache is up to date, install the packages.
         for dep in to_install:
             #No need to check again existence
@@ -268,8 +285,6 @@ class SoftwareInstall(object):
                 script.write("#!/bin/bash\n")
                 script.write("source %s/bashrc\n" % DIRAC.rootPath)
                 script.write("env > /tmp/localenv.log\n")
-                script.write("python %s/ALDIRAC/Core/Utilities/get-pip.py\n" % DIRAC.rootPath)
-                script.write("pip --version > /tmp/pip.log\n")
                 gLogger.notice("Installing %s with" % dep["name"], " ".join(comm))
                 script.write(" ".join(comm) + "\n")
                 script.write("exit $?\n")
