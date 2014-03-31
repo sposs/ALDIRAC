@@ -1,3 +1,7 @@
+[v0r0p24]
+
+Fix the simudbclient interface, add *.log in OSB
+
 [v0r0p23]
 
 Assume different dirs per application
