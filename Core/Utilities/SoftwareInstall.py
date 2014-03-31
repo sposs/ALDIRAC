@@ -265,10 +265,10 @@ class SoftwareInstall(object):
             comm.extend(["--allow-all-external"])
             fname = os.path.join(dtemp, "run.sh")
             with open(fname, "w") as script:
-                script.write("!/bin/bash\n")
+                script.write("#!/bin/bash\n")
                 script.write("source %s/bashrc\n" % DIRAC.rootPath)
                 script.write("env > /tmp/localenv.log|n")
-                script.write("pip install pip -U\n")
+                #script.write("pip install pip -U\n")
                 script.write("pip --version > /tmp/pip.log\n")
                 gLogger.notice("Installing %s with" % dep["name"], " ".join(comm))
                 script.write(" ".join(comm) + "\n")
