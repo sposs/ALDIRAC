@@ -17,6 +17,7 @@ import pkg_resources
 from pkg_resources import DistributionNotFound
 from DIRAC.Core.Utilities.Os import which
 import DIRAC
+import shutil
 
 def WasteCPUCycles(timecut):
     """ Waste, waste, and waste more CPU.
@@ -187,7 +188,7 @@ class SoftwareInstall(object):
         #cleanup in case needed
         if os.path.isdir("/tmp/pip_build_dirac"):
             try:
-                os.rmdir("/tmp/pip_build_dirac")
+                shutil.rmtree("/tmp/pip_build_dirac")
             except OSError:
                 gLogger.error("Failed to delete the directory, hope it will succeed anyway")
                 
