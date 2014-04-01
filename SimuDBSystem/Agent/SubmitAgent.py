@@ -44,7 +44,7 @@ class SubmitAgent( AgentModule ):
         self.simudb = SimuInterface(create_connection(testmode = testmode))
         self.combined = CombinedInterface(create_connection(testmode = testmode))
         self.destination_sites = {}
-        self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite")
+        self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
