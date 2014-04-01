@@ -18,6 +18,7 @@ from pkg_resources import DistributionNotFound
 from DIRAC.Core.Utilities.Os import which
 import DIRAC
 import shutil
+import glob
 
 def WasteCPUCycles(timecut):
     """ Waste, waste, and waste more CPU.
@@ -186,11 +187,13 @@ class SoftwareInstall(object):
         dtemp = tempfile.mkdtemp()
         
         #cleanup in case needed
-        if os.path.isdir("/tmp/pip_build_dirac"):
-            try:
-                shutil.rmtree("/tmp/pip_build_dirac")
-            except OSError:
-                gLogger.error("Failed to delete the directory, hope it will succeed anyway")
+        previous_dirs = glob.glob("/tmp/pip_build*")
+        for pdir in previous_dirs:
+            if os.path.isdir(pdir):
+                try:
+                    shutil.rmtree(pdir)
+                except OSError:
+                    gLogger.error("Failed to delete the directory %s, hope it will succeed anyway" % pdir)
                 
         deps_list = []
         #try to rsync app vX, use overwrite flag
