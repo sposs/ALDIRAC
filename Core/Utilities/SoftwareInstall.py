@@ -170,7 +170,7 @@ class SoftwareInstall(object):
             gLogger.error("Missing user or path or host from CS")
             return S_ERROR("Missing user or path or host from CS")
         
-        lockname = "soft_install.lock"
+        lockname = os.path.join(os.environ["HOME"],"soft_install.lock")
         res = checkLockAge(lockname)
         if not res['OK']:
             gLogger.error("Something uncool happened with the lock, will kill installation")
