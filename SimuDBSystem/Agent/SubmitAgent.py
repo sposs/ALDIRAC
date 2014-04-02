@@ -200,9 +200,9 @@ class SubmitAgent( AgentModule ):
         if failed:
             return S_ERROR("Failed adding the applications")
         job.setDestination(self.destination_sites[jobtype])
-        if self.submit_pools[jobtype]:
-            job.setSubmitPools(self.submit_pools[jobtype])
-        job.setCPUTime(self.cpu_times[jobtype])
+        #if self.submit_pools[jobtype]:
+        job.setSubmitPools(self.submit_pools[jobtype])
+        job.setCPUTime(";".join(self.cpu_times[jobtype]))
         job.setOutputSandbox(["*.log", "*.sample", "*.script"])
         job.setLogLevel(self.verbosity)
         return S_OK(job)
