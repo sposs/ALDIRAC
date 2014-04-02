@@ -45,10 +45,13 @@ class SubmitAgent( AgentModule ):
         self.combined = CombinedInterface(create_connection(testmode = testmode))
         self.destination_sites = {}
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
+        self.log.info("Destination sites for Sewlab", self.destination_sites["sewlab"])
         self.submit_pools = {}
         self.submit_pools["sewlab"] = Operations().getValue("SewLab/SubmitPools", [""])
+        self.log.info("SubmitPools for Sewlab", self.submit_pools["sewlab"])
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
+        self.log.info("MaxCPUTime for Sewlab", self.cpu_times["sewlab"])
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
         return S_OK()
     
