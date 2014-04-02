@@ -109,8 +109,9 @@ class SubmitAgent( AgentModule ):
         rm = ReplicaManager()
         res = rm.putAndRegister(final_path, input_xml_file, "AL-DIP")
         if not res["OK"]:
-            self.log.error("Failed to upload default.xml to SE:", res["Message"])
-            return S_ERROR("Failed to upload default xml")
+            if not res["Message"].count("This file GUID already exists for another file"):
+                self.log.error("Failed to upload default.xml to SE:", res["Message"])
+                return S_ERROR("Failed to upload default xml")
         self.log.info("Uploaded following file:", final_path )
         os.unlink(input_xml_file)
         self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
