@@ -47,7 +47,7 @@ class SubmitAgent( AgentModule ):
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
         self.log.info("Destination sites for Sewlab", self.destination_sites["sewlab"])
         self.submit_pools = {}
-        self.submit_pools["sewlab"] = Operations().getValue("SewLab/SubmitPools", [""])
+        self.submit_pools["sewlab"] = Operations().getValue("SewLab/SubmitPools", "")
         self.log.info("SubmitPools for Sewlab", self.submit_pools["sewlab"])
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
@@ -201,7 +201,7 @@ class SubmitAgent( AgentModule ):
             return S_ERROR("Failed adding the applications")
         job.setDestination(self.destination_sites[jobtype])
         #if self.submit_pools[jobtype]:
-        job.setSubmitPools(";".join(self.submit_pools[jobtype]))
+        job.setSubmitPools(self.submit_pools[jobtype])
         job.setCPUTime(self.cpu_times[jobtype])
         job.setOutputSandbox(["*.log", "*.sample", "*.script"])
         job.setLogLevel(self.verbosity)
