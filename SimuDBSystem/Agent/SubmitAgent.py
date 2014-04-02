@@ -45,6 +45,8 @@ class SubmitAgent( AgentModule ):
         self.combined = CombinedInterface(create_connection(testmode = testmode))
         self.destination_sites = {}
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
+        self.submit_pools = {}
+        self.submit_pools["sewlab"] = Operations().getValue("SewLab/SubmitPools", [""])
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
@@ -195,6 +197,8 @@ class SubmitAgent( AgentModule ):
         if failed:
             return S_ERROR("Failed adding the applications")
         job.setDestination(self.destination_sites[jobtype])
+        if self.submit_pools[jobtype]:
+            job.setSubmitPools(self.submit_pools[jobtype])
         job.setCPUTime(self.cpu_times[jobtype])
         job.setOutputSandbox(["*.log", "*.sample", "*.script"])
         job.setLogLevel(self.verbosity)
