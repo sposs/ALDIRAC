@@ -68,7 +68,8 @@ class SimuDBHandler(RequestHandler):
         simu_id = int(fileID.replace(".pkl",""))
         try: 
             status = gSimuDB.get_run_status(simu_id)#session is opened
-        except:
+        except Exception as error:
+            gLogger.error("Failed getting the status", str(error))
             gSimuDB.close_session()
             return S_ERROR("Failed getting the status")
         if status in ["done", "failed"]:
