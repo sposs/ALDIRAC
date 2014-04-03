@@ -39,6 +39,12 @@ class SubmitAgent( AgentModule ):
                                    "Automatically submitted tasks", 
                                    "SimuDB Monitoring", "Tasks",
                                    gMonitor.OP_ACUM )
+
+        return S_OK()
+    
+    def execute(self):
+        """ Prepare the execution
+        """
         testmode = self.am_getOption("TestMode", False)
         self.store_output = self.am_getOption("StoreOutput", True)
         self.simudb = SimuInterface(create_connection(testmode = testmode))
@@ -53,9 +59,8 @@ class SubmitAgent( AgentModule ):
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
         self.log.info("MaxCPUTime for Sewlab", self.cpu_times["sewlab"])
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
-        return S_OK()
-    
-    def execute(self):
+
+        
         res = self._get_new_tasks()
         if not res["OK"]:
             self.log.error("Failed getting the simulations to submit")
