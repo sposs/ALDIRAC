@@ -83,6 +83,7 @@ class SimuDBHandler(RequestHandler):
             return S_ERROR( "Cannot open to write destination file %s: %s" % ( file_path, str( error ) ) )
         result = fileHelper.networkToDataSink( fd )
         if not result[ 'OK' ]:
+            gLogger.error("Failed reading the data", result["Message"])
             return result
         fd.close()
         
@@ -92,11 +93,17 @@ class SimuDBHandler(RequestHandler):
         except Exception as error:
             gSimuDB.set_run_status(simu_id, "failed", 
                                           "Failed to insert result: %s" % str(error))
+            gLogger.error("Failed to insert result", str(error))
+            gSimuDB.close_session()
             return S_ERROR("Failed to insert result")
         try:
             gSimuDB.set_run_status(simu_id, "done")
-        except:
+        except Exception as error:
+            gLogger.error("Failed setting final status", str(error))
+            gSimuDB.close_session()
             return S_ERROR("Failed reporting status")
+        
+        gSimuDB.close_session()
         return S_OK()
 
     def transfer_toClient( self, fileID, token, fileHelper ):
