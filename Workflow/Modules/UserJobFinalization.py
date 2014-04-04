@@ -15,7 +15,8 @@ __RCSID__ = "$Id: UserJobFinalization.py 71836 2013-11-20 13:47:14Z sposs $"
 from DIRAC.DataManagementSystem.Client.ReplicaManager      import ReplicaManager
 from DIRAC.DataManagementSystem.Client.FailoverTransfer    import FailoverTransfer
 
-from DIRAC.Core.Security.ProxyInfo                         import getProxyInfo
+from DIRAC.Core.Security.ProxyInfo                         import getVOfromProxyGroup,\
+    getProxyInfo
 from DIRAC.Core.Utilities.File import getGlobbedFiles
 
 
@@ -162,7 +163,7 @@ class UserJobFinalization(ModuleBase):
         if self.workflow_commons.has_key('VO'):
             vo = self.workflow_commons['VO']
         else:
-            res = getCurrentVO()
+            res = getVOfromProxyGroup()
             if not res['OK']:
                 self.log.error('Failed finding the VO')
                 return S_ERROR('Could not obtain VO from proxy')
@@ -317,19 +318,5 @@ def getCurrentOwner():
     
     username = result['Value']['username']
     return S_OK(username)
-#############################################################################
-def getCurrentVO():
-    """Simple function to return current DIRAC username.
-    """
-    result = getProxyInfo()
-    if not result['OK']:
-        return S_ERROR('Could not obtain proxy information')
-    
-    if not result['Value'].has_key('group'):
-        return S_ERROR('Could not get group from proxy')
-    
-    group = result['Value']['group']
-    vo = group.split("_")[0]
-    return S_OK(vo)
 
 #EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#EOF#
