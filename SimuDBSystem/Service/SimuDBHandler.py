@@ -81,6 +81,7 @@ class SimuDBHandler(RequestHandler):
         try:
             fd = open( file_path, "wb" )
         except Exception, error:
+            gLogger.error("Failed to open file", str(error))
             return S_ERROR( "Cannot open to write destination file %s: %s" % ( file_path, str( error ) ) )
         result = fileHelper.networkToDataSink( fd )
         if not result[ 'OK' ]:
