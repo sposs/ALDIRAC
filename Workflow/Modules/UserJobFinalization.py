@@ -1,5 +1,5 @@
 ########################################################################
-# $HeadURL: svn+ssh://sposs@svn.cern.ch/reps/dirac/ILCDIRAC/trunk/ILCDIRAC/Workflow/Modules/UserJobFinalization.py $
+# $HeadURL:  $
 ########################################################################
 """ 
 Module to upload specified job output files according to the parameters
@@ -8,7 +8,6 @@ defined in the user workflow.
 @author: S. Poss
 @since: Sep 01, 2010
 """
-import glob
 
 __RCSID__ = "$Id: UserJobFinalization.py 71836 2013-11-20 13:47:14Z sposs $"
 
