@@ -19,6 +19,7 @@ from simudb.db.combined import CombinedInterface
 from simudb.helpers.script_base import create_connection
 from xml.etree.ElementTree import tostring
 from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
+from DIRAC.Resources.Catalog.FileCatalogClient import FileCatalogClient
 
 
 __RCSID__ = '$Id: $'
@@ -32,6 +33,7 @@ class SubmitAgent( AgentModule ):
         self.simudb = None
         self.shifterProxy = "ProductionManager"
         self.submissionClient = WMSClient()
+        self.fc = FileCatalogClient()
         
     def initialize( self ):
         self.am_setOption( 'shifterProxy', self.shifterProxy )
@@ -59,7 +61,7 @@ class SubmitAgent( AgentModule ):
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
         self.log.info("MaxCPUTime for Sewlab", self.cpu_times["sewlab"])
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
-
+        self.storageElement = Operations().getValue("StorageElement", "AL-DIP")
         
         res = self._get_new_tasks()
         if not res["OK"]:
@@ -116,8 +118,16 @@ class SubmitAgent( AgentModule ):
         self.simudb.close_session()#because the following can take time
         basepath = "/alpeslasers/simu/"
         final_path  = os.path.join(basepath, str(simugroupid), "default.xml")
+        res = self.fc.getReplicas(final_path)
+        if res["OK"]:
+            if final_path in res['Value']['Successful']:
+                existing = self.simudb.get_rungroup_lfnpath(simugroupid)
+                if final_path == existing:
+                    self.log.info("Found pre existing file for that group.")
+                    os.unlink(input_xml_file)
+                    return S_OK()
         rm = ReplicaManager()
-        res = rm.putAndRegister(final_path, input_xml_file, "AL-DIP")
+        res = rm.putAndRegister(final_path, input_xml_file, self.storageElement)
         if not res["OK"]:
             if not res["Message"].count("This file GUID already exists for another file"):
                 self.log.error("Failed to upload default.xml to SE:", res["Message"])
@@ -197,7 +207,7 @@ class SubmitAgent( AgentModule ):
                 if self.store_output:
                     job.setOutputData(["*.pkl"], 
                                       "%s/%s" % (simgroupid, simid), 
-                                      "AL-DIP")
+                                      self.storageElement)
             res = job.append(app)
             if not res['OK']:
                 self.log.error("Error adding task:", res['Message'])
