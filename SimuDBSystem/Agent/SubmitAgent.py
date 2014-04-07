@@ -191,7 +191,8 @@ class SubmitAgent( AgentModule ):
         #after = time.time()
         #self.log.verbose("Query took :", after - clock)
         self.log.notice("Submitting task for group", "%s_%s" % (resdict["simname"], str(simgroupid)))
-        job.setJobGroup("%s_%s" % (resdict["simname"], str(simgroupid)))
+        #job.setJobGroup("%s_%s" % (resdict["simname"], str(simgroupid)))
+        job.setJobGroup( str(simgroupid))
         path = resdict["lfnpath"]
         path = path.strip()
         job.setPriority(resdict["priority"])
