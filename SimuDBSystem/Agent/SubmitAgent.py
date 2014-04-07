@@ -171,6 +171,7 @@ class SubmitAgent( AgentModule ):
                 jdl = oJob._toJDL()
                 res = self.submissionClient.submitJob( jdl )
                 if not res["OK"]:
+                    os.unlink("jobDescription.xml")
                     self.log.error("Failed submitting task", res["Message"])
                     continue
                 jobid = res["Value"]
