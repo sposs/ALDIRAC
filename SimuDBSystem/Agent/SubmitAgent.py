@@ -190,6 +190,7 @@ class SubmitAgent( AgentModule ):
         resdict = self.simudb.get_run_submission_properties(simid)
         #after = time.time()
         #self.log.verbose("Query took :", after - clock)
+        self.log.notice("Submitting task for group", "%s_%s" % (resdict["simname"], str(simgroupid)))
         job.setJobGroup("%s_%s" % (resdict["simname"], str(simgroupid)))
         path = resdict["lfnpath"]
         path = path.strip()
