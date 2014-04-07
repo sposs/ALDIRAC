@@ -186,11 +186,11 @@ class SubmitAgent( AgentModule ):
         """
         job = UserJob()
         #here, get CPUTime, type (version) from sim
-        job.setJobGroup(str(simgroupid))
         #clock = time.time()
         resdict = self.simudb.get_run_submission_properties(simid)
         #after = time.time()
         #self.log.verbose("Query took :", after - clock)
+        job.setJobGroup("%s_%s" % (resdict["simname"], str(simgroupid)))
         path = resdict["lfnpath"]
         path = path.strip()
         job.setPriority(resdict["priority"])
