@@ -152,10 +152,10 @@ class SubmitAgent( AgentModule ):
         self.log.info( "_submit: Tasks will be submitted with the credentials %s:%s" % ( owner, ownerGroup ) )
         for simgroupid, simulations_id in simulations.items():
             for simid in simulations_id:
-                before = time.time()
+                #before = time.time()
                 res = self._make_job(simgroupid, simid)
-                after = time.time()
-                self.log.notice("Making jobs took", after - before)
+                #after = time.time()
+                #self.log.notice("Making jobs took", after - before)
                 if not res["OK"]:
                     self.log.error("Failed to make task", res['Message'])
                     continue
@@ -186,10 +186,10 @@ class SubmitAgent( AgentModule ):
         job = UserJob()
         #here, get CPUTime, type (version) from sim
         job.setJobGroup(str(simgroupid))
-        clock = time.time()
+        #clock = time.time()
         resdict = self.simudb.get_run_submission_properties(simid)
-        after = time.time()
-        self.log.verbose("Query took :", after - clock)
+        #after = time.time()
+        #self.log.verbose("Query took :", after - clock)
         path = resdict["lfnpath"]
         path = path.strip()
         job.setPriority(resdict["priority"])
