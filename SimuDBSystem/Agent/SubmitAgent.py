@@ -182,12 +182,14 @@ class SubmitAgent( AgentModule ):
         job = UserJob()
         #here, get CPUTime, type (version) from sim
         job.setJobGroup(str(simgroupid))
-        job.setPriority(self.simudb.get_rungroup_priority(simgroupid))
+        resdict = self.simudb.get_run_submission_properties(simid)
+        path = resdict["lfnpath"]
+        path = path.strip()
+        job.setPriority(resdict["priority"])
         job.setName("%s" % (simid))#This is important for the status setting, and output registration
         jobtype = ""
-        runtype, version = self.simudb.get_run_type_version(simid)
         app_dict = {}
-        app_dict[runtype] = version
+        app_dict[resdict["type"]] = resdict["version"]
         res = get_app_list(app_dict)
         if not res["OK"]:
             self.log.error("Couldn't get the applications:", res["Message"])
@@ -196,8 +198,6 @@ class SubmitAgent( AgentModule ):
         for app in res["Value"]:
             if app.appname.lower() == "sewlab":
                 jobtype = "sewlab"
-                path = self.simudb.get_rungroup_lfnpath(simgroupid)
-                path = path.strip()
                 if not path:
                     self.log.error("LFN Path is empty, not submitting")
                     failed = True
