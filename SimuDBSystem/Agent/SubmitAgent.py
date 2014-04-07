@@ -20,6 +20,7 @@ from simudb.helpers.script_base import create_connection
 from xml.etree.ElementTree import tostring
 from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC.Resources.Catalog.FileCatalogClient import FileCatalogClient
+import time
 
 
 __RCSID__ = '$Id: $'
@@ -182,7 +183,10 @@ class SubmitAgent( AgentModule ):
         job = UserJob()
         #here, get CPUTime, type (version) from sim
         job.setJobGroup(str(simgroupid))
+        clock = time.time()
         resdict = self.simudb.get_run_submission_properties(simid)
+        after = time.time()
+        self.log.notice("Query took :", after - clock)
         path = resdict["lfnpath"]
         path = path.strip()
         job.setPriority(resdict["priority"])
