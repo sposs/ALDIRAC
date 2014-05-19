@@ -106,7 +106,7 @@ class SewLab(ModuleBase):
         result = shellCall(0, comm, callbackFunction = self.redirectLogOutput, bufferLimit = 20971520)
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
-            if self.debug:
+            if not self.debug:
                 res = self.simudb.setStatus(self.jobName, "failed", "Error while executing sewlab")
                 if not res["OK"]:
                     self.log.error("Failed to set task to failed:", res["Message"])
@@ -123,7 +123,7 @@ class SewLab(ModuleBase):
         failed = False
         if status != 0:
             self.log.info( "%s execution completed with non-zero status:" % os.path.basename(scriptName) )
-            if self.debug:
+            if not self.debug:
                 res = self.simudb.setStatus(self.jobName, "failed", "Sewlab exited with status %s" % status)
                 if not res["OK"]:
                     self.log.error("Failed to set task to failed:", res["Message"])
