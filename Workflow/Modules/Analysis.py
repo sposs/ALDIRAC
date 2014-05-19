@@ -24,7 +24,7 @@ class Analysis(ModuleBase):
         self.store_output = False
         self.debug = False
     def applicationSpecificInputs(self):
-        if not os.path.exists(self.InputFile):
+        if not os.path.exists(self.InputFile[0]):
             return S_ERROR('Missing Input file')
         if self.debug:
             self.log.info("Using debug mode, i.e. do not communicate with SimuDB")
