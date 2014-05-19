@@ -156,6 +156,7 @@ class Sewlab(Application):
         self._moduledescription = 'The sewlab wrapper'
         self.ops = Operations()
 
+
     def setAlteredParameters(self, params):
         """ Alter some simulation parameters
         
@@ -187,12 +188,15 @@ class Sewlab(Application):
                                   False, "sequence"))
         m1.addParameter(Parameter("parametricvar", "", "string", "", "", False,
                                   False, "Parameter concerned by the parametric job"))
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
         
         return m1
 
     def _applicationModuleValues(self, moduleinstance):
         moduleinstance.setValue("alteredparams", self.AlteredParameters)
         moduleinstance.setValue("parametricvar", self.ParametricVariationOn)
+        moduleinstance.setValue("debug", self.Debug)
 
     def _userjobmodules(self, stepdefinition):
         res1 = self._setApplicationModuleAndParameters(stepdefinition)
@@ -342,7 +346,7 @@ class AnalyseRun(Application):
 
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
-        m1.addParameter(Parameter("store_output", "", "string", "", "", False,
+        m1.addParameter(Parameter("store_output", False, "bool", "", "", False,
                                   False, "Store the output to the DB"))
         return m1
 
