@@ -285,7 +285,9 @@ class ModuleBase(object):
             self.OutputFile = self.step_commons.get("OutputFile", "")
         
         #Next is also a module parameter, should be already set
-        self.debug = self.step_commons.get('debug', False)
+        if "debug" in self.step_commons:
+            if self.debug or self.step_commons.get('debug'):
+                self.debug = True
 
         res = self.applicationSpecificInputs()
         if not res['OK']:
