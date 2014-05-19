@@ -84,46 +84,50 @@ class Analysis(ModuleBase):
         self.log.info("Lum found: max, 0.85_min, 0.85_max, 0.5_min, 0.5_max:", str([lumL_max, lumL_085_min, lumL_085_max, lumL_05_min, lumL_05_max]))
 
         n_up = 9 #GET from DB or from Job def.
-
-        n_cols = resdict['model']['icSet'][0].from_dim
-        #n_lines = resdict['model']['icSet'][0].to_dim
-        dipoles_array = []
-        t_v = []
-        for i in range(len(resdict['model']['icDipoles'][0])):
-            t_v.append(resdict['model']['icDipoles'][0][i])
-            if (i+1)%n_cols == 0:
-                dipoles_array.append(t_v)
-                t_v = []
-        upper_vals = dipoles_array[n_up]
-        v_dict = []
-        for i in range(len(upper_vals)):
-            v_dict.append((abs(upper_vals[i]),i))
-        copy_sorted = sorted(v_dict)
-        best1 = copy_sorted[-1][0]
-        best2 = copy_sorted[-2][0]
-        best3 = copy_sorted[-3][0]
-        self.log.info( "Best dipoles, sorted:", [best1, best2, best3])
-        best1_j = copy_sorted[-1][1]
-        best2_j = copy_sorted[-2][1]
-        best3_j = copy_sorted[-3][1]
-        
-        self.log.info("Indices for best dipoles:", [best1_j, best2_j, best3_j])
-        
-        trans_array = []
-        t_v = []
-        for i in range(len(resdict['model']['icEtrans'][0])):
-            t_v.append(resdict['model']['icEtrans'][0][i])
-            if (i+1)%n_cols ==0:
-                trans_array.append(t_v)
-                t_v = []
-        upper_trans = trans_array[n_up]
-        
-        trans1 = upper_trans[best1_j]
-        trans2 = upper_trans[best2_j]
-        trans3 = upper_trans[best3_j]
-        
-        self.log.info("Transition Energy, sorted:", [trans1, trans2, trans3])
-        
+        best1 = best2 = best3 = 0.0
+        trans1 = trans2 = trans3 = 0.0
+        try:
+    
+            n_cols = resdict['model']['icSet'][0].from_dim
+            #n_lines = resdict['model']['icSet'][0].to_dim
+            dipoles_array = []
+            t_v = []
+            for i in range(len(resdict['model']['icDipoles'][0])):
+                t_v.append(resdict['model']['icDipoles'][0][i])
+                if (i+1)%n_cols == 0:
+                    dipoles_array.append(t_v)
+                    t_v = []
+            upper_vals = dipoles_array[n_up]
+            v_dict = []
+            for i in range(len(upper_vals)):
+                v_dict.append((abs(upper_vals[i]),i))
+            copy_sorted = sorted(v_dict)
+            best1 = copy_sorted[-1][0]
+            best2 = copy_sorted[-2][0]
+            best3 = copy_sorted[-3][0]
+            self.log.info( "Best dipoles, sorted:", [best1, best2, best3])
+            best1_j = copy_sorted[-1][1]
+            best2_j = copy_sorted[-2][1]
+            best3_j = copy_sorted[-3][1]
+            
+            self.log.info("Indices for best dipoles:", [best1_j, best2_j, best3_j])
+            
+            trans_array = []
+            t_v = []
+            for i in range(len(resdict['model']['icEtrans'][0])):
+                t_v.append(resdict['model']['icEtrans'][0][i])
+                if (i+1)%n_cols ==0:
+                    trans_array.append(t_v)
+                    t_v = []
+            upper_trans = trans_array[n_up]
+            
+            trans1 = upper_trans[best1_j]
+            trans2 = upper_trans[best2_j]
+            trans3 = upper_trans[best3_j]
+            
+            self.log.info("Transition Energy, sorted:", [trans1, trans2, trans3])
+        except Exception as error:
+            self.log.error("Failed to read the dipoles and the Transition energies", error)
         if self.store_output:
             self.log.info("Sending results to DB")
             if not self.debug:
