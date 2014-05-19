@@ -47,7 +47,7 @@ class SewLab(ModuleBase):
         if not self.SteeringFile:
             if self.InputFile:
                 self.SteeringFile  = os.path.basename(self.InputFile[0])
-                
+        self.log.info("Debug mode", self.debug)
         if self.debug:
             self.log.info("Will be using debug mode, no communication with SimuDB")
         return S_OK()
