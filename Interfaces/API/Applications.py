@@ -251,8 +251,13 @@ class SewlabPostProcess(Application):
 
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
         return m1
     
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("debug", self.Debug)
+            
     def _addParametersToStep(self, stepdefinition):
         res = self._addBaseParameters(stepdefinition)
         if not res["OK"]:
@@ -298,7 +303,12 @@ class RegisterOutput(Application):
 
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
         return m1
+    
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("debug", self.Debug)
     
     def _addParametersToStep(self, stepdefinition):
         res = self._addBaseParameters(stepdefinition)
@@ -348,11 +358,14 @@ class AnalyseRun(Application):
         m1 = self._createModuleDefinition()
         m1.addParameter(Parameter("store_output", False, "bool", "", "", False,
                                   False, "Store the output to the DB"))
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
         return m1
 
     def _applicationModuleValues(self, moduleinstance):
         moduleinstance.setValue("store_output", self.Store)
-    
+        moduleinstance.setValue("debug", self.Debug)
+        
     def _addParametersToStep(self, stepdefinition):
         res = self._addBaseParameters(stepdefinition)
         if not res["OK"]:

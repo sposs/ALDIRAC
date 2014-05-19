@@ -22,11 +22,12 @@ class Analysis(ModuleBase):
         super(Analysis, self).__init__()
         self.log = gLogger.getSubLogger("Analysis")
         self.store_output = False
-    
+        self.debug = False
     def applicationSpecificInputs(self):
         if not os.path.exists(self.InputFile):
             return S_ERROR('Missing Input file')
-        
+        if self.debug:
+            self.log.info("Using debug mode, i.e. do not communicate with SimuDB")
         return S_OK()
     
     def execute(self):
@@ -40,7 +41,7 @@ class Analysis(ModuleBase):
             self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
             return S_OK('Analysis should not proceed as previous step did not end properly')
         try:
-            inf = open(self.InputFile, "rb")
+            inf = open(self.InputFile[0], "rb")
             resdict = pickle.load(inf)
             inf.close()
         except:
@@ -125,7 +126,11 @@ class Analysis(ModuleBase):
         
         if self.store_output:
             self.log.info("Sending results to DB")
-            ##Do here the sending to DB 
+            if not self.debug:
+                self.log.info("Send")
+                ##Do here the sending to DB 
+            else:
+                self.log.info("Would have tried to send the results")
         else:
             self.log.info("This job shouldn't store its output to the DB")
         return S_OK()

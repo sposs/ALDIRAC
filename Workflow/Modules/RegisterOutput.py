@@ -14,6 +14,7 @@ class RegisterOutput(ModuleBase):
         super(RegisterOutput, self).__init__()
         self.log = gLogger.getSubLogger("RegisterOutput")
         self.simudb = SimuDBClient()
+        self.debug = False
         
     def applicationSpecificInputs(self):
         """ Resolve the application specific inputs
@@ -22,6 +23,8 @@ class RegisterOutput(ModuleBase):
             return S_ERROR("Cannot find proper job name")
         if not self.InputFile:
             return S_ERROR("Missing file to send back")
+        if self.debug:
+            self.log.info("Using test mode: basically, do nothing here.")
         return S_OK()
     
     def execute(self):
@@ -44,6 +47,9 @@ class RegisterOutput(ModuleBase):
 #                 self.log.error("Failed to set status to failed:", res["Message"])
 #             return S_ERROR("Failed loading from pickle")
         os.rename(self.InputFile[0], self.jobName+".pkl")
+        if self.debug:
+            self.log.info("Would have attempted to send the results back")
+            return S_OK()
         res = self.simudb.sendResult(self.jobName+".pkl")
         if not res["OK"]:
             self.log.error("Failed to send the results:", res["Message"])
