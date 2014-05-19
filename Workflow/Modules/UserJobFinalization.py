@@ -229,6 +229,7 @@ to upload the following files %s' % ', '.join(final.keys()))
             for fileName, metadata in final.items():
                 self.log.info("Attempting to store file %s to the following SE(s):\n%s" % (fileName, 
                                                                                            ', '.join(metadata['resolvedSE'])))
+                replicateSE = ''
                 result = failoverTransfer.transferAndRegisterFile(fileName, metadata['localpath'], metadata['lfn'],
                                                                   metadata['resolvedSE'], fileMetaDict = metadata, 
                                                                   fileCatalog = self.userFileCatalog)
@@ -240,7 +241,7 @@ to upload the following files %s' % ', '.join(final.keys()))
                     lfn = metadata['lfn']
                     uploaded.append(lfn)          
                     seList = metadata['resolvedSE']
-                    replicateSE = ''
+                    
                     if result['Value'].has_key('uploadedSE'):
                         uploadedSE = result['Value']['uploadedSE']            
                         for se in seList:

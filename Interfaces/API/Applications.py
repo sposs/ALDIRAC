@@ -318,6 +318,67 @@ class RegisterOutput(Application):
             stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
         return S_OK() 
 
+class AnalyseRun(Application):
+    """ Analysis class, used to store relevant parameters (for qcl_datamining for example)
+    """
+    def __init__(self, params=None):
+        self.Store = False
+        super(AnalyseRun, self).__init__(params)
+        self._modulename = "Analysis"
+        self.appname = self._modulename
+        self._moduledescription = 'Run some analysis on the output file'
+        
+    def setStore(self, Store=True):
+        """ Send those results to the DB directly
+        """
+        self.Store = Store
+
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("store_output", "", "string", "", "", False,
+                                  False, "Store the output to the DB"))
+        return m1
+
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("store_output", self.Store)
+    
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks
+        """
+        return S_OK()
+    
+    def _checkWorkflowConsistency(self):
+        return self._checkRequiredApp()
+
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if type(self._linkedidx) == types.IntType:
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
+        return S_OK() 
+
+    
+
+######################################################################################################
 from DIRAC import gLogger
 def get_app_list(app_dict):
     """ Given a generic application name, return a list of applications to be added
@@ -334,6 +395,8 @@ def get_app_list(app_dict):
             app2.getInputFromApp(app1)
             app2.setOutputFile("data.pkl")
             app_list.append(app2)
+            appAna = AnalyseRun()
+            appAna.getInputFromApp(app2)
             app3 = RegisterOutput()
             app3.getInputFromApp(app2)
             app_list.append(app3)

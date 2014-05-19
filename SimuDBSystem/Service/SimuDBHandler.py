@@ -22,7 +22,8 @@ def initializeSimuDBHandler( serviceInfo ):
     global BASE_PATH
     testmode = getServiceOption( serviceInfo, "TestMode", False)
     gSimuDB = SimuInterface(create_connection(testmode = testmode))
-    BASE_PATH = tempfile.mkdtemp()
+    #BASE_PATH = tempfile.mkdtemp()# bad as the tmp dir is cleaned by the system sometimes
+    BASE_PATH = "/opt/dirac/tmp"
     return S_OK()
 
 class SimuDBHandler(RequestHandler):

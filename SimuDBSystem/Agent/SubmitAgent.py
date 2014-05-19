@@ -205,6 +205,7 @@ class SubmitAgent( AgentModule ):
             self.log.error("Couldn't get the applications:", res["Message"])
             return res
         failed = False
+        my_params = {}
         for app in res["Value"]:
             if app.appname.lower() == "sewlab":
                 jobtype = "sewlab"
@@ -218,6 +219,9 @@ class SubmitAgent( AgentModule ):
                     job.setOutputData(["*.pkl"], 
                                       "%s/%s" % (simgroupid, simid), 
                                       self.storageElement)
+            if app.appname.lower() == "analysis":
+                if "store" in my_params and my_params['store']:
+                    app.setStore() 
             res = job.append(app)
             if not res['OK']:
                 self.log.error("Error adding task:", res['Message'])
