@@ -70,7 +70,7 @@ class Application(object):
         #Module name and description: Not to be set by the users, internal call only, used to get the Module objects
         self._modulename = ''
         self._moduledescription = ''
-        self._importLocation = "ALDIRAC.Workflow.Modules"
+        self._importLocation = "ExtDIRAC.Workflow.Modules"
             
         #System Configuration: comes from Job definition
         self._systemconfig = ''
@@ -110,7 +110,7 @@ class Application(object):
         return classstr
     
     def _setparams(self, params):
-        """ Call the setter that was passed in the input dictionary
+        """ Call the setter that was passed in the input dictionary. NASTY!!
         """
         if not params:
             return S_OK()

@@ -12,6 +12,7 @@ User Job class. Used to define (guess what?) user jobs!
 from ALDIRAC.Interfaces.API.Job import Job
 from ALDIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Core.Security.ProxyInfo                          import getProxyInfo
+from DIRAC.ConfigurationSystem.Client.Helpers.Registry import getVOForGroup
 
 from DIRAC import S_OK
 
@@ -148,8 +149,12 @@ class UserJob(Job):
             # Remove leading "/" that might cause problems with os.path.join
             while OutputPath[0] == '/': 
                 OutputPath = OutputPath[1:]
-            if OutputPath.count("alpeslasers/user"):
-                return self._reportError('Output path contains /alpeslasers/user/ which is not what you want', **kwargs)
+            while OutputPath.count('//'):
+                OutputPath.replace('//','/')
+            vo = getVOForGroup(self.proxyinfo['Value']['group'])
+            vostring = '%s/user' % vo
+            if OutputPath.count(vostring):
+                return self._reportError('Output path contains %s which is not what you want' % vostring, **kwargs)
             self._addParameter(self.workflow, 'UserOutputPath', 'JDL', OutputPath, description)
         
         return S_OK()
