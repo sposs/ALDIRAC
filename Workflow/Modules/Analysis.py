@@ -90,6 +90,20 @@ class Analysis(ModuleBase):
     
             n_cols = resdict['model']['icSet'][0].from_dim
             #n_lines = resdict['model']['icSet'][0].to_dim
+            energies = resdict['model']['cellBasis0']['spectrum']['energies']
+            # calculer Dij=Ej-Ei
+            Dij = []
+            for i in range(len(energies)):
+                temp = []
+                for j in range(len(energies)):
+                    temp.append(energies[j]-energies[i])
+                Dij.append(temp)
+            good_k = []
+            for k in range(len(Dij)):
+                if Dij[k][n_up]>0:
+                    good_k.append(k)
+            # k where E_k,nup>0:
+            #self.log.info('Good k values:', good_k)
             dipoles_array = []
             t_v = []
             for i in range(len(resdict['model']['icDipoles'][0])):
@@ -99,7 +113,7 @@ class Analysis(ModuleBase):
                     t_v = []
             upper_vals = dipoles_array[n_up]
             v_dict = []
-            for i in range(len(upper_vals)):
+            for i in good_k:
                 v_dict.append((abs(upper_vals[i]),i))
             copy_sorted = sorted(v_dict)
             best1 = copy_sorted[-1][0]
@@ -112,20 +126,23 @@ class Analysis(ModuleBase):
             
             self.log.info("Indices for best dipoles:", [best1_j, best2_j, best3_j])
             
-            trans_array = []
-            t_v = []
-            for i in range(len(resdict['model']['icEtrans'][0])):
-                t_v.append(resdict['model']['icEtrans'][0][i])
-                if (i+1)%n_cols ==0:
-                    trans_array.append(t_v)
-                    t_v = []
-            upper_trans = trans_array[n_up]
+            ##Buggy, so removed for the time being
+            #trans_array = []
+            #t_v = []
+            #for i in range(len(resdict['model']['icEtrans'][0])):
+            #    t_v.append(resdict['model']['icEtrans'][0][i])
+            #    if (i+1)%n_cols ==0:
+            #        trans_array.append(t_v)
+            #        t_v = []
+            #upper_trans = trans_array[n_up]
             
-            trans1 = upper_trans[best1_j]
-            trans2 = upper_trans[best2_j]
-            trans3 = upper_trans[best3_j]
+            #trans1 = upper_trans[best1_j]
+            #trans2 = upper_trans[best2_j]
+            #trans3 = upper_trans[best3_j]
+            #self.log.info("Transition Energy, sorted:", [trans1, trans2, trans3])
             
-            self.log.info("Transition Energy, sorted:", [trans1, trans2, trans3])
+            self.log.info("Transition Energy, sorted:", 
+                          ' '.join([Dij[best1_j][n_up], Dij[best2_j][n_up], Dij[best3_j][n_up]]))
         except Exception as error:
             self.log.error("Failed to read the dipoles and the Transition energies", error)
         if self.store_output:
