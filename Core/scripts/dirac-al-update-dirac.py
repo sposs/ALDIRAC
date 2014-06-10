@@ -7,6 +7,7 @@ Created on Jun 10, 2014
 import subprocess
 import os
 from DIRAC.Core.Utilities.Subprocess import shellCall
+import urllib2
 
 def execscript(comm):
     """
@@ -18,9 +19,12 @@ def execscript(comm):
     status  = res['Value'][0]
     
     os.unlink("tmp.sh")
+    message = ''
     if status:
         gLogger.error("Issue with call -> ", res['Value'][2])
-    return status
+        message = res['Value'][2]
+    
+    return (status, message)
 
 
 def fetch():
@@ -51,9 +55,31 @@ exit $?
     comm = "sh -c './tmp.sh'" 
     return execscript(comm)
 
+def getAmazonVMId( ):
+    try:
+        fd = urllib2.urlopen("http://instance-data.ec2.internal/latest/meta-data/instance-id", timeout=30)
+    except urllib2.URLError:
+        gLogger.warn("Can not connect to EC2 URL. Trying address 169.254.169.254 directly...")
+    try:
+        fd = urllib2.urlopen("http://169.254.169.254/latest/meta-data/instance-id", timeout=30)
+    except urllib2.URLError, e:
+        return S_ERROR( "Could not retrieve amazon instance id: %s" % str( e ) )
+    iD = fd.read().strip()
+    fd.close()
+    return S_OK( iD )
+
+
 if __name__ == '__main__':
     from DIRAC.Core.Base import Script
     Script.parseCommandLine()
+    
+    res = getAmazonVMId()
+    if not res['OK']:
+        gLogger.error("Failed getting VM ID: ", res['Message'])
+        vmID = '0000'
+    else:
+        vmID = res['Value']
+    
     # First: collect the version
     from DIRAC import gLogger, exit as dexit
     from DIRAC import rootPath
@@ -72,19 +98,23 @@ if __name__ == '__main__':
     
     os.chdir(os.path.join(rootPath, "DIRAC"))
     # do git fetch
-    if fetch():
-        gLogger.error("Failed")
+    f_d = fetch()
+    if f_d[0]:
+        gLogger.error("Failed:", f_d[1])
         dexit(1)
-    if get_version(dirac_version):
-        gLogger.error("Failed updating DIRAC")
+    g_v_d = get_version(dirac_version)
+    if g_v_d[0]:
+        gLogger.error("Failed updating DIRAC: ", g_v_d[1])
         dexit(1)
     
     os.chdir(os.path.join(rootPath, "ALDIRAC"))
-    if fetch():
-        gLogger.error("Failed")
+    f_a = fetch()
+    if f_a[0]:
+        gLogger.error("Failed: ", f_a[1])
         dexit(1)
-    if get_version(aldirac_version):
-        gLogger.error("Failed updating ALDIRAC")
+    g_v_a = get_version(aldirac_version)
+    if g_v_a[0]:
+        gLogger.error("Failed updating ALDIRAC: ", g_v_a[1])
         dexit(1)
     
     
