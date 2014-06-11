@@ -107,9 +107,7 @@ if __name__ == '__main__':
     Script.parseCommandLine()
     from DIRAC.FrameworkSystem.private.logging.Logger import Logger
     from DIRAC import gConfig
-    baselog = Logger()
-    baselog.initialize("update_dirac","/Operations/Defaults/Cloud/Logger")
-    l = baselog.getSubLogger("UpdateDirac")
+    l = Logger()
     l.initialize("update_dirac","/Operations/Defaults/Cloud/Logger")
     #This is to guarantee the messages will be send before the script exists.
     #HACK as long as ExitCallBack is disabled.
