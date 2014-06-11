@@ -2,12 +2,14 @@
 '''
 Created on Jun 10, 2014
 
-@author: stephanep
+@author: Stephane Poss
 '''
+
 import subprocess
 import os
 from DIRAC.Core.Utilities.Subprocess import shellCall
 import urllib2
+from DIRAC.FrameworkSystem.private.logging.Logger import Logger
 
 def execscript(comm):
     """
@@ -56,6 +58,9 @@ exit $?
     return execscript(comm)
 
 def getAmazonVMId( ):
+    """
+    Get the VM ID from Amazon provider 
+    """
     try:
         fd = urllib2.urlopen("http://instance-data.ec2.internal/latest/meta-data/instance-id", timeout=30)
     except urllib2.URLError:
@@ -79,42 +84,44 @@ if __name__ == '__main__':
         vmID = '0000'
     else:
         vmID = res['Value']
-    
+    l = Logger()
+    l.initialize("update_dirac","/Operations/Defaults/Cloud/Logger")
     # First: collect the version
-    from DIRAC import gLogger, exit as dexit
+    from DIRAC import exit as dexit
     from DIRAC import rootPath
     from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
     ops = Operations()
     aldirac_version = ops.getValue("Cloud/ALDIRAC/Version")
     if not aldirac_version:
-        gLogger.error("Missing ALDIRAC version to install")
+        l.error("Missing ALDIRAC version to install")
         dexit(1)
-    gLogger.info("Will install ALDIRAC ", aldirac_version)
+    l.info("Will install ALDIRAC ", aldirac_version)
     dirac_version = ops.getValue("Cloud/ALDIRAC/%s/DiracVersion" % aldirac_version)
     if not dirac_version:
-        gLogger.error("Missing DIRAC version")
+        l.error("Missing DIRAC version")
         dexit(1)
-    gLogger.info("Will install DIRAC ", dirac_version)
+    l.info("Will install DIRAC ", dirac_version)
     
     os.chdir(os.path.join(rootPath, "DIRAC"))
     # do git fetch
     f_d = fetch()
     if f_d[0]:
-        gLogger.error("Failed:", f_d[1])
+        l.error("Failed:", f_d[1])
         dexit(1)
     g_v_d = get_version(dirac_version)
     if g_v_d[0]:
-        gLogger.error("Failed updating DIRAC: ", g_v_d[1])
+        l.error("Failed updating DIRAC: ", g_v_d[1])
         dexit(1)
     
+    #Handle ALDIRAC
     os.chdir(os.path.join(rootPath, "ALDIRAC"))
     f_a = fetch()
     if f_a[0]:
-        gLogger.error("Failed: ", f_a[1])
+        l.error("Failed: ", f_a[1])
         dexit(1)
     g_v_a = get_version(aldirac_version)
     if g_v_a[0]:
-        gLogger.error("Failed updating ALDIRAC: ", g_v_a[1])
+        l.error("Failed updating ALDIRAC: ", g_v_a[1])
         dexit(1)
     
     
