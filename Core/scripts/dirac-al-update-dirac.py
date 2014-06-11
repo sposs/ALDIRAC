@@ -124,7 +124,5 @@ if __name__ == '__main__':
     if g_v_a[0]:
         l.error("Failed updating ALDIRAC: ", g_v_a[1])
         dexit(1)
-    
-    
-    
+    l.notice("All good")
     dexit(0)
