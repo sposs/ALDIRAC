@@ -9,6 +9,7 @@ import subprocess
 import os
 from DIRAC.Core.Utilities.Subprocess import shellCall
 import urllib2
+from DIRAC import S_OK, S_ERROR
 
 def execscript(log, comm):
     """
