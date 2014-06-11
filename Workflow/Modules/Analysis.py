@@ -9,6 +9,13 @@ from DIRAC import gLogger
 import os
 import pickle
 import sewlabwrapper.utils.sewlab_convert
+from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
+from DIRAC.RequestManagementSystem.Client.Request import Request
+from DIRAC.RequestManagementSystem.Client.Operation import Operation
+import time
+import random
+from DIRAC.Core.Utilities import DEncode
+from DIRAC.RequestManagementSystem.Client.ReqClient import ReqClient
 
 class Analysis(ModuleBase):
     '''
@@ -23,6 +30,8 @@ class Analysis(ModuleBase):
         self.log = gLogger.getSubLogger("Analysis")
         self.store_output = False
         self.debug = False
+        self.simudb = SimuDBClient()
+        
     def applicationSpecificInputs(self):
         if not os.path.exists(self.InputFile[0]):
             return S_ERROR('Missing Input file')
@@ -86,6 +95,7 @@ class Analysis(ModuleBase):
         n_up = 9 #GET from DB or from Job def.
         best1 = best2 = best3 = 0.0
         trans1 = trans2 = trans3 = 0.0
+        pdict = {}
         try:
     
             n_cols = resdict['model']['icSet'][0].from_dim
@@ -123,7 +133,9 @@ class Analysis(ModuleBase):
             best1_j = copy_sorted[-1][1]
             best2_j = copy_sorted[-2][1]
             best3_j = copy_sorted[-3][1]
-            
+            pdict["dipole1"] = best1
+            pdict["dipole2"] = best2
+            pdict["dipole3"] = best3
             self.log.info("Indices for best dipoles:", [best1_j, best2_j, best3_j])
             
             ##Buggy, so removed for the time being
@@ -143,15 +155,47 @@ class Analysis(ModuleBase):
             
             self.log.info("Transition Energy, sorted:", 
                           ' '.join([Dij[best1_j][n_up], Dij[best2_j][n_up], Dij[best3_j][n_up]]))
+            pdict['trans1'] = Dij[best1_j][n_up]
+            pdict['trans2'] = Dij[best2_j][n_up]
+            pdict['trans3'] = Dij[best3_j][n_up]
+            
         except Exception as error:
             self.log.error("Failed to read the dipoles and the Transition energies", error)
+        
+        pdict['current'] = resdict['solution']['netCurrent']
+        pdict['photon_energy'] = resdict['solution']["Photon_Energy"]
+        pdict['photon_flux'] = resdict['solution']["Photon_Flux"]
+        
         if self.store_output:
             self.log.info("Sending results to DB")
             if not self.debug:
                 self.log.info("Send")
-                ##Do here the sending to DB 
+                res = self.simudb.setAnalysisParameters(self.jobName, pdict)
+                if not res['OK']:
+                    if 'rpcStub' in res:
+                        failover = _sendToFailover(res['rpcStub'], self.jobName)
+                        if not failover['OK']:
+                            self.log.error('Failed failover', failover['Message'])
+                            self.log.error('Issue with registration', res['Message'])
+                            return S_ERROR("Issue when registering.")
+                    else:
+                        self.log.error('Bad RPC query, issue when registering', res['Message'])
+                        return S_ERROR("Failed to register analysis parameters")
             else:
                 self.log.info("Would have tried to send the results")
         else:
             self.log.info("This job shouldn't store its output to the DB")
         return S_OK()
+
+def _sendToFailover( rpcStub, jobname):
+    """ Create a ForwardDISET operation for failover
+    """
+    request = Request()
+    request.RequestName = "Analysis.%s" % ( jobname )
+    forwardDISETOp = Operation()
+    forwardDISETOp.Type = "ForwardDISET"
+    forwardDISETOp.Arguments = DEncode.encode( rpcStub )
+    request.addOperation( forwardDISETOp )
+    
+    return ReqClient().putRequest( request )
+

@@ -11,8 +11,10 @@ from simudb.db.simu_interface import SimuInterface
 from simudb.helpers.script_base import create_connection
 import tempfile
 import os
+from simudb.db.analysis_interface import AnalysisInterface
 
 gSimuDB = None
+gAnaDB = None
 BASE_PATH = ""
 
 __RCSID__ = "$Id"
@@ -21,7 +23,9 @@ def initializeSimuDBHandler( serviceInfo ):
     global gSimuDB
     global BASE_PATH
     testmode = getServiceOption( serviceInfo, "TestMode", False)
-    gSimuDB = SimuInterface(create_connection(testmode = testmode))
+    conn = create_connection(testmode = testmode)
+    gSimuDB = SimuInterface(conn)
+    gAnaDB = AnalysisInterface(conn)
     #BASE_PATH = tempfile.mkdtemp()# bad as the tmp dir is cleaned by the system sometimes
     BASE_PATH = "/opt/dirac/tmp"
     return S_OK()
@@ -137,4 +141,15 @@ class SimuDBHandler(RequestHandler):
             return S_ERROR("Failed to set new status %s: %s" % (status, str(error)))
         gSimuDB.close_session()
         return S_OK(status)
-        
+    
+    types_setAnalysisParameters = [types.StringType, types.DictType]
+    def export_setAnalysisParameters(self, runid, pdict):
+        """ Register the parameter values for the run
+        """
+        runid = int(runid)
+        try:
+            gAnaDB.set_parameter_value(runid, pdict)
+        except Exception as error:
+            gLogger.error("Failed setting the parameter dict:", error)
+            return S_ERROR(error)
+        return S_OK()
