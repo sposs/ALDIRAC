@@ -10,26 +10,26 @@ import os
 from DIRAC.Core.Utilities.Subprocess import shellCall
 import urllib2
 from DIRAC import S_OK, S_ERROR
+import time
 
-def execscript(log, comm):
+def execscript(comm):
     """
     Execute command, and catch if error
     """
     res= shellCall(0, comm)
     if not res['OK']:
-        log.error("Failed call %s" % res['Message'])
+        return (-1, 'Issue with shellCall')
     status  = res['Value'][0]
     
     os.unlink("tmp.sh")
     message = ''
     if status:
-        log.error("Issue with call -> %s" % res['Value'][2])
         message = res['Value'][2]
     
     return (status, message)
 
 
-def fetch(log):
+def fetch():
     """
     Do a git fetch
     """
@@ -41,9 +41,9 @@ exit $?
 """)
     os.chmod("tmp.sh", 0755)
     comm = "sh -c './tmp.sh'" 
-    return execscript(log, comm)
+    return execscript(comm)
 
-def get_version(log, version):
+def get_version(version):
     """
     Checkout a version
     """
@@ -78,13 +78,18 @@ if __name__ == '__main__':
     from DIRAC.Core.Base import Script
     Script.parseCommandLine()
     from DIRAC.FrameworkSystem.private.logging.Logger import Logger
-
-    l = Logger()
+    from DIRAC import gConfig
+    baselog = Logger()
+    baselog.initialize("update_dirac","/Operations/Defaults/Cloud/Logger")
+    l = baselog.getSubLogger("UpdateDirac")
     l.initialize("update_dirac","/Operations/Defaults/Cloud/Logger")
-
+    #This is to guarantee the messages will be send before the script exists.
+    #HACK as long as ExitCallBack is disabled.
+    time_to_sleep = gConfig.getValue("/Operations/Defaults/Cloud/Logger/BackendsOptions/SleepTime", 10)+2
     res = getAmazonVMId(l)
     if not res['OK']:
         l.error("Failed getting VM ID: %s" % res['Message'])
+        time.sleep(time_to_sleep)
         vmID = '0000'
     else:
         vmID = res['Value']
@@ -96,34 +101,41 @@ if __name__ == '__main__':
     aldirac_version = ops.getValue("Cloud/ALDIRAC/Version")
     if not aldirac_version:
         l.error("Missing ALDIRAC version on %s" % vmID)
+        time.sleep(time_to_sleep)
         dexit(1)
     l.info("Will install ALDIRAC ", aldirac_version)
     dirac_version = ops.getValue("Cloud/ALDIRAC/%s/DiracVersion" % aldirac_version)
     if not dirac_version:
         l.error("Missing DIRAC version on %s" % vmID)
+        time.sleep(time_to_sleep)
         dexit(1)
     l.info("Will install DIRAC ", dirac_version)
     
     os.chdir(os.path.join(rootPath, "DIRAC"))
     # do git fetch
-    f_d = fetch(l)
+    f_d = fetch()
     if f_d[0]:
         l.error("Failed fetching DIRAC on %s: %s" % (vmID, f_d[1]))
+        time.sleep(time_to_sleep)
         dexit(1)
-    g_v_d = get_version(l, dirac_version)
+    g_v_d = get_version(dirac_version)
     if g_v_d[0]:
         l.error("Failed updating DIRAC on %s: %s" % (vmID, g_v_d[1]))
+        time.sleep(time_to_sleep)
         dexit(1)
     
     #Handle ALDIRAC
     os.chdir(os.path.join(rootPath, "ALDIRAC"))
-    f_a = fetch(l)
+    f_a = fetch()
     if f_a[0]:
         l.error("Failed fetch ALDIRAC on %s: %s" % (vmID, f_a[1]) )
+        time.sleep(time_to_sleep)
         dexit(1)
-    g_v_a = get_version(l, aldirac_version)
+    g_v_a = get_version(aldirac_version)
     if g_v_a[0]:
         l.error("Failed updating ALDIRAC on %s: %s" % (vmID, g_v_a[1]) )
+        time.sleep(time_to_sleep)
         dexit(1)
     l.notice("All good")
+    time.sleep(time_to_sleep)
     dexit(0)
