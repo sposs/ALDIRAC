@@ -9,7 +9,6 @@ import subprocess
 import os
 from DIRAC.Core.Utilities.Subprocess import shellCall
 import urllib2
-from DIRAC.FrameworkSystem.private.logging.Logger import Logger
 
 def execscript(comm):
     """
@@ -77,15 +76,17 @@ def getAmazonVMId( ):
 if __name__ == '__main__':
     from DIRAC.Core.Base import Script
     Script.parseCommandLine()
-    
+    from DIRAC.FrameworkSystem.private.logging.Logger import Logger
+
+    l = Logger()
+    l.initialize("update_dirac","/Operations/Defaults/Cloud/Logger")
+
     res = getAmazonVMId()
     if not res['OK']:
-        gLogger.error("Failed getting VM ID: ", res['Message'])
+        l.error("Failed getting VM ID: ", res['Message'])
         vmID = '0000'
     else:
         vmID = res['Value']
-    l = Logger()
-    l.initialize("update_dirac","/Operations/Defaults/Cloud/Logger")
     # First: collect the version
     from DIRAC import exit as dexit
     from DIRAC import rootPath
