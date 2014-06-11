@@ -1,6 +1,34 @@
 #!/usr/bin/env python
 '''
-Created on Jun 10, 2014
+Utility that updates DIRAC and an extension (hard coded) from git tags defined in the CS. 
+Uses the Logger to send error messages to the SystemLogging, given that the CS 
+holds the right info. The CS must be like::
+
+  Operations
+  {
+    Defaults
+    {
+      Cloud
+      {
+        Logger
+        {
+          LogLevel=ERROR
+          LogBackends = server, stdout
+          BackendsOptions
+          {
+            FileName = Dirac-log.log
+            Interactive = False
+            SleepTime = 5
+          }
+        }
+      }
+    }
+  }
+
+Currently specific to Amazon to get the VM ID. I hope that one day VMDIRAC 
+will propose utilities to ask this kind of generic question
+
+@since Jun 10, 2014
 
 @author: Stephane Poss
 '''
@@ -131,6 +159,7 @@ if __name__ == '__main__':
         l.error("Failed fetch ALDIRAC on %s: %s" % (vmID, f_a[1]) )
         time.sleep(time_to_sleep)
         dexit(1)
+        
     g_v_a = get_version(aldirac_version)
     if g_v_a[0]:
         l.error("Failed updating ALDIRAC on %s: %s" % (vmID, g_v_a[1]) )
