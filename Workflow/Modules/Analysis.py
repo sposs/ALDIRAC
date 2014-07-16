@@ -89,8 +89,11 @@ class Analysis(ModuleBase):
         lumL_085_max =  resdict['solution']['photonMesh'][i085b]/(0.124e-3)
         lumL_05_min = resdict['solution']['photonMesh'][i05]/(0.124e-3)
         lumL_05_max = resdict['solution']['photonMesh'][i05b]/(0.124e-3)
-
+        
         self.log.info("Lum found: max, 0.85_min, 0.85_max, 0.5_min, 0.5_max:", str([lumL_max, lumL_085_min, lumL_085_max, lumL_05_min, lumL_05_max]))
+
+        max_gain = max(resdict['solution']['netLGain'])
+
 
         n_up = 9 #GET from DB or from Job def.
         best1 = best2 = best3 = 0.0
@@ -165,6 +168,7 @@ class Analysis(ModuleBase):
         pdict['current'] = resdict['solution']['netCurrent']
         pdict['photon_energy'] = resdict['solution']["Photon_Energy"]
         pdict['photon_flux'] = resdict['solution']["Photon_Flux"]
+        pdict['max_gain'] = max_gain
         
         if self.store_output:
             self.log.info("Sending results to DB")
