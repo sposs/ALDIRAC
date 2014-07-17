@@ -414,6 +414,7 @@ def get_app_list(app_dict):
             app_list.append(app2)
             appAna = AnalyseRun()
             appAna.getInputFromApp(app2)
+            app_list.append(appAna)
             app3 = RegisterOutput()
             app3.getInputFromApp(app2)
             app_list.append(app3)
