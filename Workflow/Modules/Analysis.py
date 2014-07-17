@@ -173,7 +173,7 @@ class Analysis(ModuleBase):
         if self.store_output:
             self.log.info("Sending results to DB")
             if not self.debug:
-                self.log.info("Send")
+                self.log.info("Sending %s" % str(pdict))
                 res = self.simudb.setAnalysisParameters(self.jobName, pdict)
                 if not res['OK']:
                     if 'rpcStub' in res:

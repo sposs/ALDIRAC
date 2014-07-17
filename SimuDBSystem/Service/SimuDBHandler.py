@@ -21,6 +21,7 @@ __RCSID__ = "$Id"
 
 def initializeSimuDBHandler( serviceInfo ):
     global gSimuDB
+    global gAnaDB
     global BASE_PATH
     testmode = getServiceOption( serviceInfo, "TestMode", False)
     conn = create_connection(testmode = testmode)
