@@ -401,7 +401,7 @@ class NextNano(Application):
     def __init__(self, params=None):
         super(NextNano, self).__init__(params)
         self._modulename = "NextNano"
-        self.appname = self._modulename
+        self.appname = "nextnano"
         self._moduledescription = 'Run nextnano'
         
     def _userjobmodules(self, stepdefinition):
