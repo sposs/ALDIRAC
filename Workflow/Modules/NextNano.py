@@ -85,7 +85,7 @@ class NextNano(ModuleBase):
         scriptName ='%s_%s_Run_%s.sh' % (self.applicationName, self.applicationVersion, self.STEP_NUMBER)
         with open(scriptName, "w") as script:
             script.write("#!/bin/bash\n")
-            script.write("%s -l %s %s \n" % (self.application_path, self.license_path, self.SteeringFile))
+            script.write("%s -l %s %s \n" % (self.application_path.replace(" ", "\ "), self.license_path, self.SteeringFile))
             script.write("exit $?\n")
         os.chmod(scriptName, 0755)
         
