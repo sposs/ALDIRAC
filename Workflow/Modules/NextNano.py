@@ -125,6 +125,7 @@ class NextNano(ModuleBase):
         """
         Find out where is the nextnano binary, given that it was installed using standard methods.
         """
+        self.log.debug("Env:", str(os.environ))
         if "%s_%s_DIR" %(self.applicationName, self.applicationVersion) in os.environ:
             path = os.environ["%s_%s_DIR" %(self.applicationName, self.applicationVersion)]
             fin_path = os.path.join(path, "bin 64bit", "nnp_gcc_Ubuntu_64bit.x")
