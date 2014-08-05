@@ -8,10 +8,11 @@ import os
 from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC.Core.Utilities.ReturnValues import S_ERROR, S_OK
 from DIRAC.Core.Utilities.Subprocess import shellCall
+from DIRAC import gLogger
 import shutil
 import tarfile
 
-def locateLicense(self):
+def locateLicense():
     """
     Find where the license file is
     """
@@ -38,8 +39,10 @@ class NextNano(ModuleBase):
         Constructor
         '''
         super(NextNano, self).__init__()
+        self.log = gLogger.getSubLogger("Nextnano")
         self.license_path = ""
         self.application_path = ""
+        self.applicationName = "nextnano"
     
     def applicationSpecificInputs(self):
         """
