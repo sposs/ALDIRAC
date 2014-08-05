@@ -393,8 +393,60 @@ class AnalyseRun(Application):
             stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
         return S_OK() 
 
-    
 
+class NextNano(Application):
+    """
+    Run nextnano++
+    """
+    def __init__(self, params=None):
+        super(NextNano, self).__init__(params)
+        self._modulename = "NextNano"
+        self.appname = self._modulename
+        self._moduledescription = 'Run nextnano'
+        
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
+        return m1
+
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("debug", self.Debug)
+        
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks
+        """
+        return S_OK()
+    
+    def _checkWorkflowConsistency(self):
+        return self._checkRequiredApp()
+
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if type(self._linkedidx) == types.IntType:
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
+        return S_OK() 
+        
 ######################################################################################################
 from DIRAC import gLogger
 def get_app_list(app_dict):
