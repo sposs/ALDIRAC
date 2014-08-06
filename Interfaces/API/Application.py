@@ -164,6 +164,8 @@ class Application(object):
         self.SteeringFile = steeringfile
         if os.path.exists(steeringfile) or steeringfile.lower().count("lfn:"):
             self.inputSB.append(steeringfile) 
+        else:
+            self._log.error("Cannot find the steering file neither locally nor as a LFN.")
         return S_OK()  
       
     def setLogFile(self, logfile):
