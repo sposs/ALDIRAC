@@ -140,6 +140,67 @@ on disk")
 #######################################################################
 ### Below is the really relevant stuff
 ######################################
+
+class SetJobName(Application):
+    """
+    To change the JobName parameter while executing: In case many simudb tasks are ran in the same job
+    it's needed that the jobname changes for the status changes
+    """
+    def __init__(self, params=None):
+        self.jobname = ""
+        super(SetJobName, self).__init__(params)
+        self._modulename = "SetJobName"
+        self.appname = "setjobname"
+        self._moduledescription = 'Change the job name'
+        
+    def setNewName(self, NewName):
+        """ Change the job name while the job runs. Needed for simudb when running many
+        tasks in the same job.
+        """
+        self._checkArgs({'NewName': types.StringType})
+        self.NewName = NewName
+        
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("jobname", "", "string", "", "", False,
+                                  False, "new job name"))
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
+        return m1
+    
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("jobname", self.NewName)
+        moduleinstance.setValue("debug", self.Debug)
+        
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        #for depn, depv in self.dependencies.items():
+        #    self._job._addSoftware(depn, depv)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks that script and dependencies are set.
+        """
+        if not self.jobname:
+            return S_ERROR("Missing new job name")
+        return S_OK()
+
+################################################################################
 class Sewlab(Application):
     '''
     classdocs
@@ -282,9 +343,12 @@ class SewlabPostProcess(Application):
         if type(self._linkedidx) == types.IntType:
             self._inputappstep = self._jobsteps[self._linkedidx]
         if self._inputappstep:
-            stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
+            stepinstance.setLink("InputFile", 
+                                 self._inputappstep.getType(),
+                                 "OutputFile")
         return S_OK() 
 
+######################################################################
 class RegisterOutput(Application):
     """ Take the input file, and send it straight to the SimuDB
     """
@@ -444,7 +508,8 @@ class NextNano(Application):
         if type(self._linkedidx) == types.IntType:
             self._inputappstep = self._jobsteps[self._linkedidx]
         if self._inputappstep:
-            stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
+            stepinstance.setLink("InputFile", self._inputappstep.getType(),
+                                 "OutputFile")
         return S_OK() 
         
 ######################################################################################################
@@ -456,6 +521,8 @@ def get_app_list(app_dict):
     app_list = []
     for name, version in app_dict.items():
         if name.lower() == "sewlab":
+            app0 = SetJobName()
+            app_list.append(app0)
             app1 = Sewlab()
             app1.setVersion(version)
             app1.setOutputFile("default.slo")

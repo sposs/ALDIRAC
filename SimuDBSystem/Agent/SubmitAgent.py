@@ -13,6 +13,7 @@ from DIRAC.WorkloadManagementSystem.Client.WMSClient  import WMSClient
 from ALDIRAC.Interfaces.API.UserJob                   import UserJob
 from ALDIRAC.Interfaces.API.Applications              import get_app_list
 from DIRAC.DataManagementSystem.Client.ReplicaManager import ReplicaManager
+from DIRAC.Core.Utilities.List                        import breakListIntoChunks
 import os
 from simudb.db.simu_interface import SimuInterface
 from simudb.db.combined import CombinedInterface
@@ -63,7 +64,7 @@ class SubmitAgent( AgentModule ):
         self.log.info("MaxCPUTime for Sewlab", self.cpu_times["sewlab"])
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
         self.storageElement = Operations().getValue("StorageElement", "AL-DIP")
-        
+        self.group_size = Operations().getValue("SewLab/GroupSize", 10)
         res = self._get_new_tasks()
         if not res["OK"]:
             self.log.error("Failed getting the simulations to submit")
@@ -151,9 +152,9 @@ class SubmitAgent( AgentModule ):
         ownerGroup = proxyInfo['group']
         self.log.info( "_submit: Tasks will be submitted with the credentials %s:%s" % ( owner, ownerGroup ) )
         for simgroupid, simulations_id in simulations.items():
-            for simid in simulations_id:
+            for simids in breakListIntoChunks(simulations_id, self.group_size):
                 #before = time.time()
-                res = self._make_job(simgroupid, simid)
+                res = self._make_job(simgroupid, simids)
                 #after = time.time()
                 #self.log.notice("Making jobs took", after - before)
                 if not res["OK"]:
@@ -175,63 +176,76 @@ class SubmitAgent( AgentModule ):
                     self.log.error("Failed submitting task", res["Message"])
                     continue
                 jobid = res["Value"]
-                self.simudb.set_run_status(simid, "waiting")
-                self.simudb.set_jobid(simid, jobid)
+                for simid in simids:
+                    self.simudb.set_run_status(simid, "waiting")
+                    self.simudb.set_jobid(simid, jobid)
                 os.unlink("jobDescription.xml")
             self.simudb.set_rungroup_status(simgroupid, "submitting")
         return S_OK()
     
-    def _make_job(self, simgroupid, simid):
+    def _make_job(self, simgroupid, simids):
         """ Make a job given the input simulation
         """
         job = UserJob()
         #here, get CPUTime, type (version) from sim
         #clock = time.time()
-        resdict = self.simudb.get_run_submission_properties(simid)
-        #after = time.time()
-        #self.log.verbose("Query took :", after - clock)
-        group_name = "%s_%s" % (str(resdict["simname"]), str(simgroupid))
-        #self.log.notice("Submitting task for group", group_name)
-        job.setJobGroup(group_name)
-        path = resdict["lfnpath"]
-        path = path.strip()
-        job.setPriority(resdict["priority"])
-        job.setName("%s" % (simid))#This is important for the status setting, and output registration
         jobtype = ""
-        app_dict = {}
-        app_dict[resdict["type"]] = resdict["version"]
-        res = get_app_list(app_dict)
-        if not res["OK"]:
-            self.log.error("Couldn't get the applications:", res["Message"])
-            return res
-        failed = False
-        my_params = {}
-        for app in res["Value"]:
-            if app.appname.lower() == "sewlab":
-                jobtype = "sewlab"
-                if not path:
-                    self.log.error("LFN Path is empty, not submitting")
-                    failed = True
-                app.setSteeringFile("LFN:"+path)
-                my_params = self.simudb.get_sewlabrun_parameters(simid)
-                app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
-                if self.store_output:
-                    job.setOutputData(["*.pkl"], 
-                                      "%s/%s" % (simgroupid, simid), 
-                                      self.storageElement)
-            if app.appname.lower() == "analysis":
-                if "store" in my_params and my_params['store']:
-                    app.setStore() 
-            res = job.append(app)
-            if not res['OK']:
-                self.log.error("Error adding task:", res['Message'])
-                return S_ERROR("Failed adding application %s" % app.appname)
-        if failed:
-            return S_ERROR("Failed adding the applications")
+        group_name = "%s" % str(simgroupid)
+        job.setJobGroup(group_name)
+        job.setName("%s-%s" % (simids[0], simids[-1]))
+        max_prio = 0
+        is_sewlab = False
+        n_sub_jobs = len(simids)
+        for simid in simids:
+            resdict = self.simudb.get_run_submission_properties(simid)
+            #after = time.time()
+            #self.log.verbose("Query took :", after - clock)
+            #group_name = "%s_%s" % (str(resdict["simname"]), str(simgroupid))
+            #self.log.notice("Submitting task for group", group_name)
+            #job.setJobGroup(group_name)
+            path = resdict["lfnpath"]
+            path = path.strip()
+            if resdict["priority"]>max_prio:
+                #select the highest priority as the job's priority
+                max_prio = resdict["priority"]
+            #job.setName("%s" % (simid))
+            app_dict = {}
+            app_dict[resdict["type"]] = resdict["version"]
+            res = get_app_list(app_dict)
+            if not res["OK"]:
+                self.log.error("Couldn't get the applications:", res["Message"])
+                continue
+            failed = False
+            my_params = {}
+            for app in res["Value"]:
+                if app.appname.lower() == "setjobname":
+                    app.setNewName(str(simid))
+                if app.appname.lower() == "sewlab":
+                    is_sewlab = True
+                    jobtype = "sewlab"
+                    if not path:
+                        self.log.error("LFN Path is empty, not submitting")
+                        failed = True
+                    app.setSteeringFile("LFN:"+path)
+                    my_params = self.simudb.get_sewlabrun_parameters(simid)
+                    app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
+                    
+                if app.appname.lower() == "analysis":
+                    if "store" in my_params and my_params['store']:
+                        app.setStore() 
+                res = job.append(app)
+                if not res['OK']:
+                    self.log.error("Error adding task:", res['Message'])
+                    return S_ERROR("Failed adding application %s" % app.appname)
+            if failed:
+                return S_ERROR("Failed adding the applications")
+        if self.store_output and is_sewlab:
+            job.setOutputData(["*.pkl"], "%s" % (simgroupid), self.storageElement)
+        job.setPriority(max_prio)
         job.setDestination(self.destination_sites[jobtype])
         #if self.submit_pools[jobtype]:
         job.setSubmitPool(self.submit_pools[jobtype])
-        job.setCPUTime(self.cpu_times[jobtype])
+        job.setCPUTime(n_sub_jobs * self.cpu_times[jobtype])
         job.setOutputSandbox(["*.log", "*.sample", "*.script"])
         job.setLogLevel(self.verbosity)
         return S_OK(job)
