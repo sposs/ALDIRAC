@@ -196,7 +196,7 @@ class SetJobName(Application):
     def _checkConsistency(self):
         """ Checks that script and dependencies are set.
         """
-        if not self.jobname:
+        if not self.NewName:
             return S_ERROR("Missing new job name")
         return S_OK()
 
