@@ -218,6 +218,7 @@ class SubmitAgent( AgentModule ):
             failed = False
             my_params = {}
             for app in res["Value"]:
+                self.log.info("Found app", app.appname)
                 if app.appname.lower() == "setjobname":
                     app.setNewName(str(simid))
                 if app.appname.lower() == "sewlab":
