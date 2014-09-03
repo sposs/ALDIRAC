@@ -45,7 +45,7 @@ class SewLab(ModuleBase):
             self.parameterchanges[self.parametricvar] = self.parametricParameters
 
         if not self.taskname:
-            self.taskname = self.workflow_commons.get("TaskName", self.JobName)
+            self.taskname = self.workflow_commons.get("TaskName", self.jobName)
 
         if not self.SteeringFile:
             if self.InputFile:
