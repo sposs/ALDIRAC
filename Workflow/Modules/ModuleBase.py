@@ -334,7 +334,7 @@ class ModuleBase(object):
             bpath = os.path.join(self.basedirectory, os.path.basename(self.SteeringFile))
             if os.path.exists(bpath):
                 try:
-                    shutil.move(bpath, "./"+os.path.basename(self.SteeringFile))
+                    shutil.copy(bpath, "./"+os.path.basename(self.SteeringFile))
                 except EnvironmentError, why:
                     self.log.error("Failed to get the file:", str(why))
                     
