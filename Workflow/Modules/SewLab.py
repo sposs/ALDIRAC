@@ -27,6 +27,7 @@ class SewLab(ModuleBase):
         self.alteredparams = ""
         self.parametricvar = ""
         self.simudb = SimuDBClient()
+        self.taskname = ""
         self.debug = False
         
     def applicationSpecificInputs(self):
@@ -43,6 +44,8 @@ class SewLab(ModuleBase):
         if self.parametricvar:
             self.parameterchanges[self.parametricvar] = self.parametricParameters
 
+        if not self.taskname:
+            self.taskname = self.workflow_commons.get("TaskName", self.JobName)
 
         if not self.SteeringFile:
             if self.InputFile:
@@ -62,9 +65,9 @@ class SewLab(ModuleBase):
             self.log.error("Failed to resolve input parameters:", self.result["Message"])
             return self.result
 
-        if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
-            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
-            return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
+        #if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
+        #    self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
+        #    return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
 
 
         self.SteeringFile = os.path.basename(self.SteeringFile)
@@ -94,10 +97,10 @@ class SewLab(ModuleBase):
         comm = 'sh -c "./%s"' % (scriptName)
         self.setApplicationStatus('%s %s step %s' % (self.applicationName, self.applicationVersion, self.STEP_NUMBER))
         if not self.debug:
-            res = self.simudb.setStatus(self.jobName, "running")
+            res = self.simudb.setStatus(self.taskname, "running")
             if not res['OK']:
                 self.log.error("Failed to set status to running:", res["Message"])
-                res = self.simudb.setStatus(self.jobName, "running")
+                res = self.simudb.setStatus(self.taskname, "running")
                 if not res['OK']:
                     self.log.error("Failed again to set status to running:", res["Message"])
                     self.log.error("Will fail the task")
@@ -109,7 +112,7 @@ class SewLab(ModuleBase):
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
             if not self.debug:
-                res = self.simudb.setStatus(self.jobName, "failed", "Error while executing sewlab")
+                res = self.simudb.setStatus(self.taskname, "failed", "Error while executing sewlab")
                 if not res["OK"]:
                     self.log.error("Failed to set task to failed:", res["Message"])
             else:
@@ -126,7 +129,7 @@ class SewLab(ModuleBase):
         if status != 0:
             self.log.info( "%s execution completed with non-zero status:" % os.path.basename(scriptName) )
             if not self.debug:
-                res = self.simudb.setStatus(self.jobName, "failed", "Sewlab exited with status %s" % status)
+                res = self.simudb.setStatus(self.taskname, "failed", "Sewlab exited with status %s" % status)
                 if not res["OK"]:
                     self.log.error("Failed to set task to failed:", res["Message"])
             else:
@@ -138,7 +141,7 @@ class SewLab(ModuleBase):
         elif not os.path.exists(self.OutputFile):
             self.log.error("Missing output file")
             if not self.debug:
-                res = self.simudb.setStatus(self.jobName, "failed", "Missing output after sewlab execution")
+                res = self.simudb.setStatus(self.taskname, "failed", "Missing output after sewlab execution")
                 if not res["OK"]:
                     self.log.error("Failed to set task to failed:", res["Message"])
             else:

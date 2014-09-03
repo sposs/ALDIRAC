@@ -15,6 +15,7 @@ class RegisterOutput(ModuleBase):
         self.log = gLogger.getSubLogger("RegisterOutput")
         self.simudb = SimuDBClient()
         self.debug = False
+        self.taskname = ""
         
     def applicationSpecificInputs(self):
         """ Resolve the application specific inputs
@@ -23,6 +24,10 @@ class RegisterOutput(ModuleBase):
             return S_ERROR("Cannot find proper job name")
         if not self.InputFile:
             return S_ERROR("Missing file to send back")
+        
+        if not self.taskname:
+            self.taskname = self.workflow_commons.get("TaskName", self.jobName)
+        
         if self.debug:
             self.log.info("Using test mode: basically, do nothing here.")
         return S_OK()
@@ -42,21 +47,21 @@ class RegisterOutput(ModuleBase):
 #             res_dict = pickle.load(open(self.InputFile,"rb"))
 #         except Exception as error:
 #             self.log.error("Failed to load from pickle:", str(error))
-#             res = self.simudb.setStatus(self.jobName, "failed", "Can't load from pickled file")
+#             res = self.simudb.setStatus(self.taskname, "failed", "Can't load from pickled file")
 #             if not res['OK']:
 #                 self.log.error("Failed to set status to failed:", res["Message"])
 #             return S_ERROR("Failed loading from pickle")
-        os.rename(self.InputFile[0], self.jobName+".pkl")
+        os.rename(self.InputFile[0], self.taskname+".pkl")
         if self.debug:
             self.log.info("Would have attempted to send the results back")
             return S_OK()
-        res = self.simudb.sendResult(self.jobName+".pkl")
+        res = self.simudb.sendResult(self.taskname+".pkl")
         if not res["OK"]:
             self.log.error("Failed to send the results:", res["Message"])
-            res = self.simudb.setStatus(self.jobName, "failed", "Cannot send results: %s" % res["Message"])
+            res = self.simudb.setStatus(self.taskname, "failed", "Cannot send results: %s" % res["Message"])
             if not res['OK']:
                 self.log.error("Failed to set status to failed:", res["Message"])
-                res = self.simudb.setStatus(self.jobName, "failed", "%s" % res["Message"])
+                res = self.simudb.setStatus(self.taskname, "failed", "%s" % res["Message"])
                 if not res["OK"]:#try again
                     self.log.error("Failed to set status to failed:", res["Message"])
                     return S_ERROR("Failed setting final failed status")

@@ -43,6 +43,7 @@ class NextNano(ModuleBase):
         self.license_path = ""
         self.application_path = ""
         self.applicationName = "nextnano"
+        self.taskname = ""
     
     def applicationSpecificInputs(self):
         """
@@ -55,6 +56,8 @@ class NextNano(ModuleBase):
             return S_ERROR("Failed to find the nextnano binary")
         self.application_path = res['Value']
         
+        if not self.taskname:
+            self.taskname = self.workflow_commons.get("TaskName", self.jobName)
         return S_OK()
 
     def applicationSpecificMoveBefore(self):

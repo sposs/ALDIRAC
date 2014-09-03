@@ -19,6 +19,7 @@ class SewlabPostProcess(ModuleBase):
         self.log = gLogger.getSubLogger("SewlabPostProcess")
         self.simudb = SimuDBClient()
         self.debug = False
+        self.taskname = ""
         
     def applicationSpecificInputs(self):
         """ Check if the output file is defined
@@ -27,6 +28,9 @@ class SewlabPostProcess(ModuleBase):
             self.OutputFile = "output_%s.pkl" % self.jobID
         if not self.InputFile:
             return S_ERROR("Missing input file")
+        
+        if not self.taskname:
+            self.taskname = self.workflow_commons.get("TaskName", self.jobName)
     
         if self.debug:
             self.log.info("Using debug mode: no communication with SimuDB")
@@ -77,7 +81,7 @@ class SewlabPostProcess(ModuleBase):
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
             if not self.debug:
-                res = self.simudb.setStatus(self.jobName, "failed", "Error while executing converter" )
+                res = self.simudb.setStatus(self.taskname, "failed", "Error while executing converter" )
                 if not res["OK"]:
                     self.log.error("Failed updating task status:", res["Message"])
             else:
@@ -86,7 +90,7 @@ class SewlabPostProcess(ModuleBase):
         
         if not os.path.exists(self.OutputFile):
             if self.debug:
-                res = self.simudb.setStatus(self.jobName, "failed", "Missing converter output")
+                res = self.simudb.setStatus(self.taskname, "failed", "Missing converter output")
                 if not res["OK"]:
                     self.log.error("Failed updating task status:", res["Message"])
             else:

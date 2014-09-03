@@ -31,10 +31,13 @@ class Analysis(ModuleBase):
         self.store_output = False
         self.debug = False
         self.simudb = SimuDBClient()
+        self.taskname = ""
         
     def applicationSpecificInputs(self):
         if not os.path.exists(self.InputFile[0]):
             return S_ERROR('Missing Input file')
+        if not self.taskname:
+            self.taskname = self.workflow_commons.get("TaskName", self.jobName)
         if self.debug:
             self.log.info("Using debug mode, i.e. do not communicate with SimuDB")
         return S_OK()
@@ -174,10 +177,10 @@ class Analysis(ModuleBase):
             self.log.info("Sending results to DB")
             if not self.debug:
                 self.log.info("Sending %s" % str(pdict))
-                res = self.simudb.setAnalysisParameters(self.jobName, pdict)
+                res = self.simudb.setAnalysisParameters(self.taskname, pdict)
                 if not res['OK']:
                     if 'rpcStub' in res:
-                        failover = _sendToFailover(res['rpcStub'], self.jobName)
+                        failover = _sendToFailover(res['rpcStub'], self.taskname)
                         if not failover['OK']:
                             self.log.error('Failed failover', failover['Message'])
                             self.log.error('Issue with registration', res['Message'])
