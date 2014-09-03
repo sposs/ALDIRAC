@@ -21,7 +21,7 @@ from simudb.helpers.script_base import create_connection
 from xml.etree.ElementTree import tostring
 from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC.Resources.Catalog.FileCatalogClient import FileCatalogClient
-import time
+#import time
 
 
 __RCSID__ = '$Id: $'
