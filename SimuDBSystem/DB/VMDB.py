@@ -31,7 +31,7 @@ class VMDB(DB):
             tablesToCreate['Instances'] = {'Fields': {'Id': 'INTEGER UNSIGNED AUTO_INCREMENT NOT NULL',
                                                       'InstanceID': 'VARCHAR(32) NOT NULL',
                                                       'Status': "VARCHAR(8) NOT NULL",
-                                                      "StartedAt": "DATETIME NOT NULL",
+                                                      "StartedAt": "DATETIME",
                                                       "StoppedAt": "DATETIME",
                                                       "Type": "VARCHAR(32) NOT NULL",
                                                       "AMI": "VARCHAR(32) NOT NULL"
@@ -47,11 +47,20 @@ class VMDB(DB):
                 return result
         return S_OK()
 
+    def register_instance(self, instance_id, instance_type, instance_image, connection=False):
+        connection = self.__getConnection(connection)
+        self.insertFields("Instances", ['InstanceID', 'Status', "Type", "AMI"],
+                          [instance_id, "Idle", instance_type,
+                           instance_image], conn=connection)
+        return S_OK()
+
     def is_alive(self, instance_id, instance_dict, connection=False):
         connection = self.__getConnection(connection)
-        self.insertFields("Instances", ['InstanceID', 'Status', "StartedAt", "Type", "AMI"],
-                          [instance_id, "Running", instance_dict['Start'], instance_dict['Type'],
-                           instance_dict['AMI']], conn=connection)
+        self.updateFields("Instances",
+                          ['Status', "StartedAt"],
+                          ["Running", instance_dict['Start']],
+                          {'InstanceID': instance_id},
+                          conn=connection)
         return S_OK()
 
     def is_stopped(self, instance_id):
@@ -73,6 +82,6 @@ class VMDB(DB):
 
     def instance_properties(self, instance_id):
         conn = self._getConnection()
-        res = self.getFields("Instances", ['InstanceID', "Status", "StartedAt", "StoppedAt", "Type", "AMI"],
+        res = self.getFields("Instances", ["Status", "StartedAt", "StoppedAt", "Type", "AMI"],
                              {"InstanceID": instance_id}, conn=conn)
         return res
