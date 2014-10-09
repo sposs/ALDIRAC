@@ -150,4 +150,7 @@ class StartRunAgent(AgentModule):
         res = self.systemAdmin.restartComponent("WorkloadManagement", "JobManager")
         if not res['OK']:
             return res
-        return self.systemAdmin.startComponent("SimuDB", "SubmitAgent")
+        res = self.systemAdmin.startComponent("SimuDB", "SubmitAgent")
+        if not res['OK']:
+            return res
+        return self.systemAdmin.startComponent("SimuDB", "StopRunAgent")

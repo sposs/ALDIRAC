@@ -4,6 +4,7 @@ from DIRAC.FrameworkSystem.Client.SystemAdministratorClient import SystemAdminis
 from DIRAC.Core.DISET.RPCClient import RPCClient
 
 from DIRAC import S_OK, S_ERROR
+from DIRAC.WorkloadManagementSystem.Client.JobMonitoringClient import JobMonitoringClient
 
 __author__ = 'stephanep'
 __RCSID__ = "$Id$"
@@ -12,8 +13,13 @@ __RCSID__ = "$Id$"
 class StopRunAgent(StartRunAgent):
     def __init__(self, *args, **kwargs):
         StartRunAgent.__init__(*args, **kwargs)
+        self.job_monitor = None
 
     def execute(self):
+        """
+        Code executed when the agent runs
+        :return: S_OK, S_ERROR
+        """
         self.vmdb = RPCClient("SimuDB/VMDB")
         host = self.am_getOption("SubmitAgentHost", "dirac.internal.alp")
         self.systemAdmin = SystemAdministratorClient(host)
@@ -64,9 +70,18 @@ class StopRunAgent(StartRunAgent):
         if not res['OK']:
             return res
 
+        res = self._commit_suicide()
+        if not res["OK"]:
+            return res
         return S_OK()
 
     def _check_age(self, instance_id):
+        """
+        Check the Server VM instance age. If it is younger than 1 hour, leave it be. otherwise,
+        if it's nearly the end of the hour (5 minutes), terminate it
+        :param instance_id: instance ID
+        :return: S_OK(0) or S_OK(1), S_ERROR()
+        """
         res = self.vmdb.instanceProperties(instance_id)
         if not res['OK']:
             self.log.error("Instance properties cannot be obtained")
@@ -78,15 +93,29 @@ class StopRunAgent(StartRunAgent):
         except ValueError:
             return S_ERROR("Failed to convert the started time: %s" % str(properties["Started"]))
         lifetime = now - started
+        if lifetime < 3600:
+            # machine is too young: we keep it alive for another hour, just in case
+            return S_OK(1)
         if 3600 - (lifetime.total_seconds() % 3600) > 5*60:
             # machine is too young
             return S_OK(1)
         return S_OK(0)
 
     def _check_WMS_Jobs(self):
-        return S_OK()
+        """
+        Check that there are not any jobs in a transient state in the system
+        :return: S_OK(job_list), S_ERROR
+        """
+        self.job_monitor = JobMonitoringClient()
+        res = self.job_monitor.getJobs({'Status': ["Scheduled", "Checking", 'Waiting', "Matched", "Running",
+                                                   "Completed"]})
+        return res
 
     def _stop_submit_agent(self):
+        """
+        Stop the submit agent
+        :return: S_OK, S_ERROR
+        """
         return self.systemAdmin.stopComponent("SimuDB", "SubmitAgent")
 
     def _update_CS(self):
@@ -115,3 +144,10 @@ class StopRunAgent(StartRunAgent):
         if not res['OK']:
             return res
         return S_OK()
+
+    def _commit_suicide(self):
+        """
+        Die, Mother-F@%!$#, Die!
+        :return:
+        """
+        return self.systemAdmin.stopComponent("SimuDB", "StopRunAgent")

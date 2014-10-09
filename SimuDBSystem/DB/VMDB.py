@@ -47,15 +47,20 @@ class VMDB(DB):
                 return result
         return S_OK()
 
-    def register_instance(self, instance_id, instance_type, instance_image, connection=False):
-        connection = self.__getConnection(connection)
+    def register_instance(self, instance_id, instance_type, instance_image):
+        connection = self._getConnection()
         self.insertFields("Instances", ['InstanceID', 'Status', "Type", "AMI"],
-                          [instance_id, "Idle", instance_type,
+                          [instance_id, "Standby", instance_type,
                            instance_image], conn=connection)
         return S_OK()
 
-    def is_alive(self, instance_id, instance_dict, connection=False):
-        connection = self.__getConnection(connection)
+    def is_alive(self, instance_id, instance_dict):
+        connection = self._getConnection()
+        res = self.getFields("Instances", ["Status"], {"InstanceID": instance_id}, conn=connection)
+        if not res['OK']:
+            return res
+        if not len(res['Value']):
+            return S_ERROR("VM %s does not exist" % instance_id)
         self.updateFields("Instances",
                           ['Status', "StartedAt"],
                           ["Running", instance_dict['Start']],
@@ -65,6 +70,11 @@ class VMDB(DB):
 
     def is_stopped(self, instance_id):
         conn = self._getConnection()
+        res = self.getFields("Instances", ["Status"], {"InstanceID": instance_id}, conn=conn)
+        if not res['OK']:
+            return res
+        if not len(res['Value']):
+            return S_ERROR("VM %s does not exist" % instance_id)
         res = self.updateFields("Instances", ['Status', "StoppedAt"],
                                 ["Stopped", datetime.datetime.utcnow().replace(microsecond=0)],
                                 {'InstanceID': instance_id}, conn=conn)
@@ -77,7 +87,7 @@ class VMDB(DB):
 
     def running_instance(self):
         conn = self._getConnection()
-        res = self.getFields("Instances", ["InstanceID"], {"Status": "Running"}, conn=conn)
+        res = self.getFields("Instances", ["InstanceID"], {"Status": ["Running", "Standby"]}, conn=conn)
         return res
 
     def instance_properties(self, instance_id):
