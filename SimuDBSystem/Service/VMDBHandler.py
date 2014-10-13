@@ -4,7 +4,7 @@ import time
 from urlparse import urlparse
 from boto.regioninfo import RegionInfo
 from ALDIRAC.SimuDBSystem.DB.VMDB import VMDB
-from ConfigurationSystem.Client.Helpers.Operations import Operations
+from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC.Core.DISET.RequestHandler import RequestHandler
 from DIRAC import S_OK, S_ERROR
 
