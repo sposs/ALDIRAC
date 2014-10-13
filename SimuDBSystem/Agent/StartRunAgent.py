@@ -1,6 +1,6 @@
-from ConfigurationSystem.private.Modificator import Modificator
-from Core.Security import ProxyInfo
-from Core.Utilities import Time
+from DIRAC.ConfigurationSystem.private.Modificator import Modificator
+from DIRAC.Core.Security import ProxyInfo
+from DIRAC.Core.Utilities import Time
 from DIRAC.Core.DISET.RPCClient import RPCClient
 from DIRAC.Core.Base.AgentModule import AgentModule
 from DIRAC import S_OK, S_ERROR, gConfig
