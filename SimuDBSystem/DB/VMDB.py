@@ -49,24 +49,25 @@ class VMDB(DB):
 
     def register_instance(self, instance_id, instance_type, instance_image):
         connection = self._getConnection()
-        self.insertFields("Instances", ['InstanceID', 'Status', "Type", "AMI"],
-                          [instance_id, "Standby", instance_type,
-                           instance_image], conn=connection)
-        return S_OK()
+        res = self.insertFields("Instances", ['InstanceID', 'Status', "Type", "AMI"],
+                                [instance_id, "Standby", instance_type, instance_image],
+                                conn=connection)
+        return res
 
     def is_alive(self, instance_id, instance_dict):
         connection = self._getConnection()
         res = self.getFields("Instances", ["Status"], {"InstanceID": instance_id}, conn=connection)
         if not res['OK']:
             return res
+        self.log.debug("Status", res['Value'])
         if not len(res['Value']):
             return S_ERROR("VM %s does not exist" % instance_id)
-        self.updateFields("Instances",
-                          ['Status', "StartedAt"],
-                          ["Running", instance_dict['Start']],
-                          {'InstanceID': instance_id},
-                          conn=connection)
-        return S_OK()
+        res = self.updateFields("Instances",
+                                ['Status', "StartedAt"],
+                                ["Running", instance_dict['Start']],
+                                {'InstanceID': instance_id},
+                                conn=connection)
+        return res
 
     def is_stopped(self, instance_id):
         conn = self._getConnection()
