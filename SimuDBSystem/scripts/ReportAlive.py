@@ -24,7 +24,7 @@ if __name__ == "__main__":
     from DIRAC.Core.Base import Script
     Script.parseCommandLine()
     from DIRAC.FrameworkSystem.private.logging.Logger import Logger
-    from Core.DISET.RPCClient import RPCClient
+    from DIRAC.Core.DISET.RPCClient import RPCClient
     from DIRAC import exit as dexit
     l = Logger()
     l.initialize("report_alive", "/Operations/Defaults/Cloud/Logger")
