@@ -32,7 +32,7 @@ class StartRunAgent(AgentModule):
         AgentModule.__init__(self, *args, **kwargs)
         self.vmdb = None
         self.systemAdmin = None
-        self.shifterProxy = "ProductionManager"
+        self.shifterProxy = "VMManager"
 
     def initialize(self):
         self.am_setOption('shifterProxy', self.shifterProxy)
