@@ -55,11 +55,11 @@ class StartRunAgent(AgentModule):
         res = self._check_instance()
         if not res['OK']:
             return res
-        instanceID = res['Value']
-        if instanceID:
+        if res['Value']:
             self.log.info("Instance already up and running, don't need to continue.")
             return S_OK()
-
+        else:
+            self.log.info("No waiting/running instance found")
         res = self.vmdb.startServerInstance()
         if not res['OK']:
             self.log.error(res['Message'])

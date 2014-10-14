@@ -84,15 +84,32 @@ class VMDB(DB):
     def status(self, instance_id):
         conn = self._getConnection()
         res = self.getFields("Instances", ['Status'], {'InstanceID': instance_id}, conn=conn)
-        return res
+        if not res['OK']:
+            return res
+        if not len(res['Value']):
+            return S_ERROR("No Instance found")
+        status = res['Value'][0][0]
+        return S_OK(status)
 
     def running_instance(self):
         conn = self._getConnection()
         res = self.getFields("Instances", ["InstanceID"], {"Status": ["Running", "Standby"]}, conn=conn)
-        return res
+        if not res['OK']:
+            return res
+        for row in res['Value']:
+            if len(row):
+                return S_OK(row[0])
+        return S_OK("")
 
     def instance_properties(self, instance_id):
         conn = self._getConnection()
         res = self.getFields("Instances", ["Status", "StartedAt", "StoppedAt", "Type", "AMI"],
                              {"InstanceID": instance_id}, conn=conn)
-        return res
+        if not res['OK']:
+            return res
+        if not len(res['Value']):
+            return S_ERROR("No Instance found")
+        if len(res['Value']) > 1:
+            return S_ERROR("Too many instances called %s" % instance_id)
+        row = res['Value'][0]
+        return S_OK({'Status': row[0], "Started": row[1], "Stopped": row[2], "Type": row[3], "AMI": row[4]})

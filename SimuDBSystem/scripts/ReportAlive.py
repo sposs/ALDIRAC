@@ -1,3 +1,4 @@
+#!/bin/env python
 import urllib2
 import datetime
 
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     from DIRAC import exit as dexit
     l = Logger()
     l.initialize("report_alive", "/Operations/Defaults/Cloud/Logger")
-    vmdb = RPCClient("SimuDb/VMDB")
+    vmdb = RPCClient("SimuDB/VMDB")
     instance_id = get_info("instance-id")
     p_dict = {'Start': datetime.datetime.utcnow().replace(microsecond=0)}
     res = vmdb.isAlive(instance_id, p_dict)

@@ -98,10 +98,16 @@ class VMDBHandler(RequestHandler):
         idList = []
         failed_ids = []
         for instance in reservation.instances:
+            res = gVMDB.register_instance(instance.id, vm_params['AMI'], vm_params['Type'])
+            if not res['OK']:
+                self.log.error("Issue with instance registration", res['Message'])
             instance.update()
             while instance.state != u'running':
                 if instance.state == u'terminated':
                     self.log.error("New instance terminated while starting", "AMI: %s" % vm_params["AMI"])
+                    res = gVMDB.is_stopped(instance.id)
+                    if not res['OK']:
+                        self.log.error("CCouldn't mark instance as stopped", res['Message'])
                     continue
                 self.log.info("Sleeping for 10 secs for instance %s (current state %s)" % (instance, instance.state))
                 time.sleep(10)
@@ -111,17 +117,15 @@ class VMDBHandler(RequestHandler):
             idList.append(instance.id)
             if not __conn.associate_address(instance.id, public_ip=vm_params['PublicIP']):
                 self.log.error("Issue setting the elastic IP, will terminate the instance")
+                res = gVMDB.is_stopped(instance.id)
+                if not res['OK']:
+                    self.log.error("CCouldn't mark instance as stopped", res['Message'])
                 failed_ids.append(instance.id)
                 idList.pop(instance.id)
         if failed_ids:
             __conn.terminate_instances(failed_ids)
         if not idList:
             return S_ERROR("No instance started.")
-        for inst_id in idList:
-            res = gVMDB.register_instance(inst_id, vm_params['AMI'], vm_params['Type'])
-            if not res['OK']:
-                self.log.error("Failed to register the instance", res['Message'])
-                return res
         return S_OK(idList)
 
     types_stopServerInstance = [list(types.StringTypes) + [types.ListType]]
