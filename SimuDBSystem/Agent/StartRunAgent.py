@@ -60,11 +60,6 @@ class StartRunAgent(AgentModule):
             return S_OK()
         else:
             self.log.info("No waiting/running instance found")
-        res = self.vmdb.startServerInstance()
-        if not res['OK']:
-            self.log.error(res['Message'])
-            # In case of failure, wait until next iteration to try again
-            return res
 
         res = self._update_CS()
         if not res['OK']:
@@ -75,6 +70,12 @@ class StartRunAgent(AgentModule):
                 self.log.error("Failed again to update the CS:", res['Message'])
                 # Don't start the submit agent as it will submit jobs that will fail in nasty ways.
                 return S_ERROR(res)
+
+        res = self.vmdb.startServerInstance()
+        if not res['OK']:
+            self.log.error(res['Message'])
+            # In case of failure, wait until next iteration to try again
+            return res
 
         res = self._start_submit_agent()
         if not res['OK']:
@@ -141,15 +142,6 @@ class StartRunAgent(AgentModule):
         Start the SubmitAgent that processes new jobs in SimuDB.
         :return: S_OK()
         """
-        res = self.systemAdmin.restartComponent("WorkloadManagement", "Matcher")
-        if not res['OK']:
-            return res
-        res = self.systemAdmin.restartComponent("WorkloadManagement", "SandboxStore")
-        if not res['OK']:
-            return res
-        res = self.systemAdmin.restartComponent("WorkloadManagement", "JobManager")
-        if not res['OK']:
-            return res
         res = self.systemAdmin.startComponent("SimuDB", "SubmitAgent")
         if not res['OK']:
             return res
