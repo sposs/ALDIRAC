@@ -50,7 +50,9 @@ class SubmitAgent( AgentModule ):
         """ Prepare the execution
         """
         testmode = self.am_getOption("TestMode", False)
+        self.log.info("Testmode is ", testmode)
         self.store_output = self.am_getOption("StoreOutput", True)
+        self.log.info("Storing the output always:", self.store_output)
         self.simudb = SimuInterface(create_connection(testmode = testmode))
         self.combined = CombinedInterface(create_connection(testmode = testmode))
         self.destination_sites = {}
