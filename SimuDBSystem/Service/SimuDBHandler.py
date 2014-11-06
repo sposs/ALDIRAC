@@ -19,17 +19,19 @@ BASE_PATH = ""
 
 __RCSID__ = "$Id"
 
-def initializeSimuDBHandler( serviceInfo ):
+
+def initializeSimuDBHandler(serviceInfo):
     global gSimuDB
     global gAnaDB
     global BASE_PATH
-    testmode = getServiceOption( serviceInfo, "TestMode", False)
-    conn = create_connection(testmode = testmode)
+    testmode = getServiceOption(serviceInfo, "TestMode", False)
+    conn = create_connection(testmode=testmode)
     gSimuDB = SimuInterface(conn)
     gAnaDB = AnalysisInterface(conn)
     #BASE_PATH = tempfile.mkdtemp()# bad as the tmp dir is cleaned by the system sometimes
     BASE_PATH = "/opt/dirac/tmp"
     return S_OK()
+
 
 class SimuDBHandler(RequestHandler):
     """ Simple service that inserts the simulation results into the DB
@@ -43,7 +45,7 @@ class SimuDBHandler(RequestHandler):
             return S_ERROR("Failed converting the data")
         simu_id = int(simuid)
         try: 
-            status = gSimuDB.get_run_status(simu_id)#session is opened
+            status = gSimuDB.get_run_status(simu_id)  # session is opened
         except:
             gSimuDB.close_session()
             return S_ERROR("Failed getting the status")
@@ -54,7 +56,7 @@ class SimuDBHandler(RequestHandler):
             gSimuDB.set_run_result(pickle.dump(res_dict))
         except Exception as error:
             gSimuDB.set_run_status(simu_id, "failed", 
-                                          "Failed to insert result: %s" % str(error))
+                                   "Failed to insert result: %s" % str(error))
             gSimuDB.close_session()
             return S_ERROR("Failed to insert result")
         try:
@@ -65,7 +67,7 @@ class SimuDBHandler(RequestHandler):
         gSimuDB.close_session()
         return S_OK()
 
-    def transfer_fromClient( self, fileID, token, fileSize, fileHelper ):
+    def transfer_fromClient(self, fileID, token, fileSize, fileHelper):
         """ Method to receive file from clients.
         fileID is the local file name in the SE.
         fileSize can be Xbytes or -1 if unknown.
@@ -73,7 +75,7 @@ class SimuDBHandler(RequestHandler):
         """
         simu_id = int(fileID.replace(".pkl",""))
         try: 
-            status = gSimuDB.get_run_status(simu_id)#session is opened
+            status = gSimuDB.get_run_status(simu_id)  # session is opened
         except Exception as error:
             gLogger.error("Failed getting the status", str(error))
             gSimuDB.close_session()
@@ -85,12 +87,12 @@ class SimuDBHandler(RequestHandler):
         file_path = os.path.join(BASE_PATH, fileID)
         fileHelper.disableCheckSum()
         try:
-            fd = open( file_path, "wb" )
+            fd = open(file_path, "wb")
         except Exception, error:
             gLogger.error("Failed to open file", str(error))
-            return S_ERROR( "Cannot open to write destination file %s: %s" % ( file_path, str( error ) ) )
-        result = fileHelper.networkToDataSink( fd )
-        if not result[ 'OK' ]:
+            return S_ERROR("Cannot open to write destination file %s: %s" % (file_path, str(error)))
+        result = fileHelper.networkToDataSink(fd)
+        if not result['OK']:
             gLogger.error("Failed reading the data", result["Message"])
             return result
         fd.close()
@@ -100,7 +102,7 @@ class SimuDBHandler(RequestHandler):
             os.unlink(file_path)
         except Exception as error:
             gSimuDB.set_run_status(simu_id, "failed", 
-                                          "Failed to insert result: %s" % str(error))
+                                   "Failed to insert result: %s" % str(error))
             gLogger.error("Failed to insert result", str(error))
             gSimuDB.close_session()
             return S_ERROR("Failed to insert result")
@@ -114,24 +116,24 @@ class SimuDBHandler(RequestHandler):
         gSimuDB.close_session()
         return S_OK()
 
-    def transfer_toClient( self, fileID, token, fileHelper ):
+    def transfer_toClient(self, fileID, token, fileHelper):
         """ Do nothing, needed for TransferClient interface
         """
         return S_OK()
     
-    def transfer_bulkFromClient( self, fileID, token, ignoredSize, fileHelper ):
+    def transfer_bulkFromClient(self, fileID, token, ignoredSize, fileHelper):
         """ Receive files packed into a tar archive by the fileHelper logic.
         token is used for access rights confirmation.
         """
         return S_OK()
     
-    def transfer_bulkToClient( self, fileId, token, fileHelper ):
+    def transfer_bulkToClient(self, fileId, token, fileHelper):
         """ Do nothing, needed for TransferClient interface
         """
         return S_OK()
     
     types_setStatus = [types.StringType, types.StringTypes]
-    def export_setStatus(self, simuid, status, message = ""):
+    def export_setStatus(self, simuid, status, message=""):
         """ Set the task status
         """
         simu_id = int(simuid)
@@ -152,5 +154,5 @@ class SimuDBHandler(RequestHandler):
             gAnaDB.set_parameter_value(runid, pdict)
         except Exception as error:
             gLogger.error("Failed setting the parameter dict:", error)
-            return S_ERROR(error)
+            return S_ERROR(str(error))
         return S_OK()

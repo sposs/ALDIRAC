@@ -11,7 +11,7 @@ defined in the user workflow.
 
 __RCSID__ = "$Id: UserJobFinalization.py 71836 2013-11-20 13:47:14Z sposs $"
 
-from DIRAC.DataManagementSystem.Client.ReplicaManager      import ReplicaManager
+from DIRAC.DataManagementSystem.Client.DataManager      import DataManager
 from DIRAC.DataManagementSystem.Client.FailoverTransfer    import FailoverTransfer
 
 from DIRAC.Core.Security.ProxyInfo                         import getVOfromProxyGroup,\
@@ -27,6 +27,7 @@ from DIRAC                                                 import S_OK, S_ERROR,
 
 import os, random, time
 
+
 class UserJobFinalization(ModuleBase):
     """ User Job finalization: takes care of uploading the output data to the specified storage elements
     If it does not work, it will upload to a Failover SE, then register the request to replicate and remove.  
@@ -39,7 +40,7 @@ class UserJobFinalization(ModuleBase):
         self.version = __RCSID__
         self.log = gLogger.getSubLogger( "UserJobFinalization" )
         self.enable = True
-        self.failoverTest = False #flag to put file to failover SE by default
+        self.failoverTest = False  # flag to put file to failover SE by default
         self.defaultOutputSE = gConfig.getValue( '/Resources/StorageElementGroups/Tier1-USER', [])    
         self.failoverSEs = gConfig.getValue('/Resources/StorageElementGroups/Tier1-Failover', [])
         #List all parameters here
@@ -290,11 +291,11 @@ to upload the following files %s' % ', '.join(final.keys()))
             return S_ERROR('Failed To Upload Output Data')
         
         #If there is now at least one replica for uploaded files can trigger replication
-        rm = ReplicaManager()
+        rm = DataManager(catalogs=self.userFileCatalog)
         self.log.info('Sleeping for 10 seconds before attempting replication of recently uploaded files')
         time.sleep(10)
         for lfn, repSE in replication.items():
-            result = rm.replicateAndRegister(lfn, repSE, catalog = self.userFileCatalog)
+            result = rm.replicateAndRegister(lfn, repSE)
             if not result['OK']:
                 self.log.info('Replication failed with below error but file already exists in Grid storage with \
                 at least one replica:\n%s' % (result))

@@ -9,6 +9,8 @@ from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 from DIRAC import gLogger
 #import pickle
 import os
+
+
 class RegisterOutput(ModuleBase):
     def __init__(self):
         super(RegisterOutput, self).__init__()
@@ -36,7 +38,8 @@ class RegisterOutput(ModuleBase):
         """ Execute the stuff
         """
         if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
-            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
+            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'],
+                                                                         self.stepStatus['OK']))
             return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
         
         result = self.resolveInputVariables()

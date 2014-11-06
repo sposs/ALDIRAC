@@ -10,6 +10,7 @@ import os
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 from DIRAC.Core.Utilities.Os import which
 
+
 class SewlabPostProcess(ModuleBase):
     '''
     Convert the sewlab output to python pickle
@@ -47,7 +48,8 @@ class SewlabPostProcess(ModuleBase):
             return self.result
 
         if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
-            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
+            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'],
+                                                                         self.stepStatus['OK']))
             return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
         
         bin_name = self.ops.getValue("SewLab/ConverterName", "sewlabwrapper_convert")

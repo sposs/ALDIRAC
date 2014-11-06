@@ -17,6 +17,7 @@ import inspect
 
 __RCSID__ = "$Id:  $"
 
+
 class Job(DiracJob):
     """ ALDIRAC job class
     
@@ -42,14 +43,17 @@ class Job(DiracJob):
         """ Overload method to cancel it
         """
         return self._reportError('%s does not implement setInputData' % self.__class__.__name__)
+
     def setInputSandbox(self, files):
         """ Overload method to cancel it
         """
         return self._reportError('This job class does not implement setInputSandbox')
-    def setOuputData(self, lfns, OutputSE = [], OutputPath = '' ):
+
+    def setOuputData(self, lfns, OutputSE=[], OutputPath=''):
         """ Overload method to cancel it
         """
         return self._reportError('This job class does not implement setOutputData')
+
     def setOutputSandbox(self, files):
         """ Overload method to cancel it
         """
@@ -77,13 +81,13 @@ class Job(DiracJob):
         self.check = False
         return S_OK()
     
-    def submit(self, dirac = None, mode = 'wms'):
+    def submit(self, dirac = None, mode='wms'):
         """ Method to submit the job. Not doing anything by default, so that ProductionJobs 
         cannot be submitted by mistake
         """
         return S_ERROR("Not available for this job class")
     
-    def checkparams(self, dirac = None):
+    def checkparams(self, dirac=None):
         """ Check job consistency instead of submitting
         """
         if not dirac:
@@ -105,7 +109,7 @@ class Job(DiracJob):
             self.log.notice(app)
             app.listAttributes()
             self.log.notice("\n")
-        res = promptUser('Proceed and submit job(s)?', logger = self.log)
+        res = promptUser('Proceed and submit job(s)?', logger=self.log)
         if not res['OK']:
             return S_ERROR("User did not validate")
         if res['Value'] == 'n':
@@ -209,7 +213,7 @@ class Job(DiracJob):
             res = application._resolveLinkedStepParameters(stepInstance)
             if not res['OK']:
                 self.log.error("Failed to resolve linked parameters:", "%s" % res['Message'])
-                return S_ERROR("Failed to resolve linked parameters:", "%s" % res['Message'])
+                return S_ERROR("Failed to resolve linked parameters: %s" % res['Message'])
             #Now prevent overwriting of parameter values.
             application._addedtojob()
             
@@ -250,25 +254,25 @@ class Job(DiracJob):
         #    self._addParameter(self.workflow, "Energy", "float", self.energy, "Energy used")
         return S_OK()
     
-    def _addSoftware( self, appName, appVersion ):
+    def _addSoftware(self, appName, appVersion):
         """ Private method
         """
         
-        currentApp  = "%s.%s" % ( appName.lower(), appVersion )
+        currentApp  = "%s.%s" % (appName.lower(), appVersion)
         swPackages  = 'SoftwarePackages'
         description = 'AL Software Packages to be installed'
         
-        if not self.workflow.findParameter( swPackages ):
-            self._addParameter( self.workflow, swPackages, 'JDL', currentApp, description )
+        if not self.workflow.findParameter(swPackages):
+            self._addParameter(self.workflow, swPackages, 'JDL', currentApp, description)
         else:
-            apps = self.workflow.findParameter( swPackages ).getValue()
+            apps = self.workflow.findParameter(swPackages).getValue()
         
-            if not currentApp in apps.split( ';' ):
+            if not currentApp in apps.split(';'):
                 apps += ';' + currentApp
         
-            self._addParameter( self.workflow, swPackages, 'JDL', apps, description )
+            self._addParameter(self.workflow, swPackages, 'JDL', apps, description)
       
-    def _checkArgs( self, argNamesAndTypes ):
+    def _checkArgs(self, argNamesAndTypes):
         """ Private method to check the validity of the parameters
         """
         
@@ -278,27 +282,27 @@ class Job(DiracJob):
         # a tuple with four items. The fourth item ([3]) contains the local
         # variables in a dict.
         
-        args = inspect.getargvalues( inspect.stack()[ 1 ][ 0 ] )[ 3 ]
+        args = inspect.getargvalues(inspect.stack()[1][0])[3]
         
         #
         
         for argName, argType in argNamesAndTypes.iteritems():
         
-            if not args.has_key(argName):
+            if argName not in args:
                 self._reportError(
                                   'Method does not contain argument \'%s\'' % argName,
                                   __name__,
                                   **self._getArgsDict( 1 )
                                   )
         
-            if not isinstance( args[argName], argType):
+            if not isinstance(args[argName], argType):
                 self._reportError(
                                   'Argument \'%s\' is not of type %s' % ( argName, argType ),
                                   __name__,
                                   **self._getArgsDict( 1 )
                                   )
     
-    def _getArgsDict( self, level = 0 ):
+    def _getArgsDict(self, level=0):
         """ Private method
         """
         
@@ -309,7 +313,7 @@ class Job(DiracJob):
         
         #
         
-        args = inspect.getargvalues( inspect.stack()[ level ][ 0 ] )
+        args = inspect.getargvalues(inspect.stack()[level][0])
         adict = {}
         
         for arg in args[0]:

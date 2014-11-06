@@ -6,11 +6,8 @@ Created on Aug 21, 2014
 from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC import S_ERROR, S_OK, gLogger
 
-class SetJobName(ModuleBase):
-    '''
-    classdocs
-    '''
 
+class SetJobName(ModuleBase):
 
     def __init__(self):
         '''

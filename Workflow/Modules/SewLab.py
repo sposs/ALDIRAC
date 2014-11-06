@@ -13,6 +13,7 @@ from xml.etree.ElementTree import SubElement
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 from sewlabwrapper.utils.sewlabparams_parser import sewlab_xml_parser
 
+
 class SewLab(ModuleBase):
     def __init__(self):
         super(SewLab, self).__init__()
@@ -49,7 +50,7 @@ class SewLab(ModuleBase):
 
         if not self.SteeringFile:
             if self.InputFile:
-                self.SteeringFile  = os.path.basename(self.InputFile[0])
+                self.SteeringFile = os.path.basename(self.InputFile[0])
         if self.debug:
             self.log.info("Will be using debug mode, no communication with SimuDB")
         return S_OK()
@@ -60,7 +61,7 @@ class SewLab(ModuleBase):
 
         self.result = S_OK()
         if not self.applicationLog:
-            self.result = S_ERROR( 'No Log file provided' )
+            self.result = S_ERROR('No Log file provided')
         if not self.result['OK']:
             self.log.error("Failed to resolve input parameters:", self.result["Message"])
             return self.result
@@ -108,7 +109,7 @@ class SewLab(ModuleBase):
         else:
             self.log.info("Would have reported job as running")
         self.stdError = ''
-        result = shellCall(0, comm, callbackFunction = self.redirectLogOutput, bufferLimit = 20971520)
+        result = shellCall(0, comm, callbackFunction=self.redirectLogOutput, bufferLimit=20971520)
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
             if not self.debug:
@@ -124,10 +125,10 @@ class SewLab(ModuleBase):
         status = resultTuple[0]
         # stdOutput = resultTuple[1]
         # stdError = resultTuple[2]
-        self.log.info( "Status after %s execution is %s" %(os.path.basename(scriptName), str(status)) )
+        self.log.info( "Status after %s execution is %s" % (os.path.basename(scriptName), str(status)))
         failed = False
         if status != 0:
-            self.log.info( "%s execution completed with non-zero status:" % os.path.basename(scriptName) )
+            self.log.info( "%s execution completed with non-zero status:" % os.path.basename(scriptName))
             if not self.debug:
                 res = self.simudb.setStatus(self.taskname, "failed", "Sewlab exited with status %s" % status)
                 if not res["OK"]:
@@ -136,7 +137,7 @@ class SewLab(ModuleBase):
                 self.log.info("Reporting job status to failed")
             failed = True
         elif len(self.stdError) > 0:
-            self.log.info( "%s execution completed with application warning:" % os.path.basename(scriptName) )
+            self.log.info( "%s execution completed with application warning:" % os.path.basename(scriptName))
             self.log.info(self.stdError)
         elif not os.path.exists(self.OutputFile):
             self.log.error("Missing output file")
@@ -149,11 +150,11 @@ class SewLab(ModuleBase):
             status = 2
             failed = True
         else:
-            self.log.info( "%s execution completed successfully:" % os.path.basename(scriptName) )
+            self.log.info("%s execution completed successfully:" % os.path.basename(scriptName))
         
-        if failed == True:
-            self.log.error( "==================================\n StdError:\n" )
-            self.log.error( self.stdError )
+        if failed:
+            self.log.error("==================================\n StdError:\n")
+            self.log.error(self.stdError)
             return S_ERROR('%s Exited With Status %s' % (os.path.basename(scriptName), status))
         
         #Above can't be removed as it is the last notification for user jobs
@@ -161,7 +162,6 @@ class SewLab(ModuleBase):
                                                             self.applicationName, self.applicationVersion))
         return S_OK('%s (%s %s) Successful' % (os.path.basename(scriptName), 
                                                self.applicationName, self.applicationVersion))
-
     
     def _altersample(self):
         """ Create the Sample file
@@ -187,7 +187,8 @@ class SewLab(ModuleBase):
                 for elem in script_elems:
                     altered_elem = self.alter_xml(elem, self.parameterchanges)
                     script.append(altered_elem)
-                for param, value in self.parameterchanges.items(): #all remaining elements are added as script parameters
+                for param, value in self.parameterchanges.items():  # all remaining elements are added as
+                # script parameters
                     SubElement(script, "SewLabScriptParam", {"name": param, "value": value, 
                                                              "type": type(value).__name__})
                 final_tree = ElementTree.ElementTree(xml_repr)
@@ -204,7 +205,7 @@ class SewLab(ModuleBase):
         shared_area = self.ops.getValue("SharedArea", "/common/exe")
         real_bin_name = self.ops.getValue("SewLab/BinName", "sewlab_mono")
         real_bin_path = self.ops.getValue("SewLab/EC2Path", ["/home/ec2-user/", shared_area])
-        if "%s_%s_DIR" %(self.applicationName, self.applicationVersion) in os.environ:
+        if "%s_%s_DIR" % (self.applicationName, self.applicationVersion) in os.environ:
             real_bin_path.append(os.environ["%s_%s_DIR" %(self.applicationName, self.applicationVersion)])
         for try_path in real_bin_path:
             real_path = os.path.join(try_path, real_bin_name)
@@ -229,5 +230,3 @@ class SewLab(ModuleBase):
                 input_element.attrib["value"] = value
                 del params_dict[param]
         return input_element
-
-    

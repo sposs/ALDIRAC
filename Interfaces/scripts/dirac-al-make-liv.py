@@ -3,6 +3,7 @@
 from DIRAC.Core.Base import Script
 from DIRAC import S_OK
 
+
 class CliParams(object):
     def __init__(self):
         super(CliParams, self).__init__()
@@ -48,9 +49,9 @@ if __name__ == '__main__':
     from ALDIRAC.Interfaces.API.Applications import Sewlab, SewlabPostProcess
     from ALDIRAC.Interfaces.API.Dirac import Dirac
     
-    d= Dirac(True, "%s.rep" % cli.design)
+    d = Dirac(True, "%s.rep" % cli.design)
     
-    j= UserJob()
+    j = UserJob()
     j.setCPUTime(700)
     j.setName("%s_efield_%s")
     j.setJobGroup("%s_LIV" % cli.design)
@@ -74,8 +75,7 @@ if __name__ == '__main__':
     #    gLogger.error(res['Message'])
     #    dexit(1)
     
-    j.setOutputSandbox([output, "*.log"])
+    #j.setOutputSandbox([output, "*.log"])
     
     res = j.submit(d)
     print res
-    

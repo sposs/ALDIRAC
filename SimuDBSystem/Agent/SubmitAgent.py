@@ -1,10 +1,10 @@
-'''
+"""
 SubmitAgent: find and submit new simulations tasks
 
 Created on Mar 6, 2014
 
 @author: stephanep
-'''
+"""
 from DIRAC                                            import S_OK, S_ERROR
 from DIRAC                                            import gMonitor
 from DIRAC.Core.Base.AgentModule                      import AgentModule
@@ -12,7 +12,7 @@ from DIRAC.Core.Security.ProxyInfo                    import getProxyInfo
 from DIRAC.WorkloadManagementSystem.Client.WMSClient  import WMSClient
 from ALDIRAC.Interfaces.API.UserJob                   import UserJob
 from ALDIRAC.Interfaces.API.Applications              import get_app_list
-from DIRAC.DataManagementSystem.Client.ReplicaManager import ReplicaManager
+from DIRAC.DataManagementSystem.Client.DataManager    import DataManager
 from DIRAC.Core.Utilities.List                        import breakListIntoChunks
 import os
 from simudb.db.simu_interface import SimuInterface
@@ -27,22 +27,23 @@ from DIRAC.Resources.Catalog.FileCatalogClient import FileCatalogClient
 __RCSID__ = '$Id: $'
 AGENT_NAME = 'SimuDBSystem/SubmitAgent'
 
-class SubmitAgent( AgentModule ):
-    
-    def __init__( self, *args, **kwargs ):
 
-        AgentModule.__init__( self, *args, **kwargs )
+class SubmitAgent(AgentModule):
+    
+    def __init__(self, *args, **kwargs):
+
+        AgentModule.__init__(self, *args, **kwargs)
         self.simudb = None
         self.shifterProxy = "ProductionManager"
         self.submissionClient = WMSClient()
         self.fc = FileCatalogClient()
         
-    def initialize( self ):
-        self.am_setOption( 'shifterProxy', self.shifterProxy )
-        gMonitor.registerActivity( "SubmittedTasks", 
-                                   "Automatically submitted tasks", 
-                                   "SimuDB Monitoring", "Tasks",
-                                   gMonitor.OP_ACUM )
+    def initialize(self):
+        self.am_setOption('shifterProxy', self.shifterProxy)
+        gMonitor.registerActivity("SubmittedTasks",
+                                  "Automatically submitted tasks",
+                                  "SimuDB Monitoring", "Tasks",
+                                  gMonitor.OP_ACUM)
 
         return S_OK()
     
@@ -87,8 +88,10 @@ class SubmitAgent( AgentModule ):
         
         """
         try:
-            #TODO: make sure the simu groups that have no simulations are still returned so that they get their final status
-            simusdict = self.simudb.get_runs_with_status_in_group_with_status(status = ["new"], gstat = ["new", "submitting"])
+            #TODO: make sure the simu groups that have no simulations are still returned so
+            #TODO: that they get their final status
+            simusdict = self.simudb.get_runs_with_status_in_group_with_status(status=["new"], gstat=["new",
+                                                                                                     "submitting"])
             ## session is opened
         except:
             return S_ERROR("Couldn't get the simu dict")
@@ -121,7 +124,7 @@ class SubmitAgent( AgentModule ):
             xml_file.write(tostring(input_xml))
         self.simudb.close_session()#because the following can take time
         basepath = "/alpeslasers/simu/"
-        final_path  = os.path.join(basepath, str(simugroupid), "default.xml")
+        final_path = os.path.join(basepath, str(simugroupid), "default.xml")
         res = self.fc.getReplicas(final_path)
         if res["OK"]:
             if final_path in res['Value']['Successful']:
@@ -130,8 +133,8 @@ class SubmitAgent( AgentModule ):
                     self.log.info("Found pre existing file for that group.")
                     os.unlink(input_xml_file)
                     return S_OK()
-        rm = ReplicaManager()
-        res = rm.putAndRegister(final_path, input_xml_file, self.storageElement)
+        dm = DataManager()
+        res = dm.putAndRegister(final_path, input_xml_file, self.storageElement)
         if not res["OK"]:
             if not res["Message"].count("This file GUID already exists for another file"):
                 self.log.error("Failed to upload default.xml to SE:", res["Message"])
@@ -144,15 +147,15 @@ class SubmitAgent( AgentModule ):
     def _submit(self, simulations):
         """ Create and submit the tasks
         """
-        self.log.info( "_submit: Submitting tasks" )
-        res = getProxyInfo( False, False )
+        self.log.info("_submit: Submitting tasks")
+        res = getProxyInfo(False, False)
         if not res['OK']:
-            self.log.error( "_submit: Failed to determine credentials for submission", res['Message'] )
+            self.log.error("_submit: Failed to determine credentials for submission", res['Message'])
             return res
         proxyInfo = res['Value']
         owner = proxyInfo['username']
         ownerGroup = proxyInfo['group']
-        self.log.info( "_submit: Tasks will be submitted with the credentials %s:%s" % ( owner, ownerGroup ) )
+        self.log.info("_submit: Tasks will be submitted with the credentials %s:%s" % (owner, ownerGroup))
         for simgroupid, simulations_id in simulations.items():
             for simids in breakListIntoChunks(simulations_id, self.group_size):
                 #before = time.time()
@@ -164,15 +167,15 @@ class SubmitAgent( AgentModule ):
                     continue
                 oJob = res['Value']
                 oJob._addToWorkflow()
-                resolvedFiles = oJob._resolveInputSandbox( oJob.inputsandbox )
-                fileList = ";".join( resolvedFiles )
+                resolvedFiles = oJob._resolveInputSandbox(oJob.inputsandbox)
+                fileList = ";".join(resolvedFiles)
                 description = 'Input sandbox file list'
-                oJob._addParameter( oJob.workflow, 'InputSandbox', 'JDL', fileList, description )
-                workflowFile = open( "jobDescription.xml", 'w' )
-                workflowFile.write( oJob._toXML() )
+                oJob._addParameter( oJob.workflow, 'InputSandbox', 'JDL', fileList, description)
+                workflowFile = open("jobDescription.xml", 'w')
+                workflowFile.write(oJob._toXML())
                 workflowFile.close()
                 jdl = oJob._toJDL()
-                res = self.submissionClient.submitJob( jdl )
+                res = self.submissionClient.submitJob(jdl)
                 if not res["OK"]:
                     os.unlink("jobDescription.xml")
                     self.log.error("Failed submitting task", res["Message"])
@@ -211,8 +214,7 @@ class SubmitAgent( AgentModule ):
                 #select the highest priority as the job's priority
                 max_prio = resdict["priority"]
             #job.setName("%s" % (simid))
-            app_dict = {}
-            app_dict[resdict["type"]] = resdict["version"]
+            app_dict = {resdict["type"]: resdict["version"]}
             res = get_app_list(app_dict)
             if not res["OK"]:
                 self.log.error("Couldn't get the applications:", res["Message"])
@@ -252,4 +254,3 @@ class SubmitAgent( AgentModule ):
         job.setOutputSandbox(["*.log", "*.sample", "*.script"])
         job.setLogLevel(self.verbosity)
         return S_OK(job)
-    

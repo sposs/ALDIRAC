@@ -4,7 +4,7 @@ Created on Feb 6, 2014
 @author: stephanep
 '''
 from ALDIRAC.Interfaces.API.Application import Application
-from DIRAC.Core.Workflow.Parameter                    import Parameter
+from DIRAC.Core.Workflow.Parameter import Parameter
 from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC import S_OK, S_ERROR
 import types
@@ -225,8 +225,8 @@ class Sewlab(Application):
             "transport.number-of-kT-before-cut-off=7"])
             
         """
-        if not type(params) == types.ListType:
-            params  = [params]
+        if not isinstance(params, list):
+            params = [params]
         self.AlteredParameters = ";".join(params)
 
     def setParametricVariationOn(self, param):
@@ -241,8 +241,7 @@ class Sewlab(Application):
         """
         self._checkArgs({'param': types.StringType})
         self.ParametricVariationOn = param
-        
-        
+
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
         m1.addParameter(Parameter("alteredparams", "", "string", "", "", False,
@@ -348,6 +347,7 @@ class SewlabPostProcess(Application):
                                  "OutputFile")
         return S_OK() 
 
+
 ######################################################################
 class RegisterOutput(Application):
     """ Take the input file, and send it straight to the SimuDB
@@ -395,6 +395,7 @@ class RegisterOutput(Application):
         if self._inputappstep:
             stepinstance.setLink("InputFile", self._inputappstep.getType(), "OutputFile")
         return S_OK() 
+
 
 class AnalyseRun(Application):
     """ Analysis class, used to store relevant parameters (for qcl_datamining for example)
@@ -511,9 +512,12 @@ class NextNano(Application):
             stepinstance.setLink("InputFile", self._inputappstep.getType(),
                                  "OutputFile")
         return S_OK() 
-        
+
+
 ######################################################################################################
 from DIRAC import gLogger
+
+
 def get_app_list(app_dict):
     """ Given a generic application name, return a list of applications to be added
     Format is app['name'] = version

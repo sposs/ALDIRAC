@@ -16,23 +16,24 @@ __RCSID__ = "$Id: DiracILC.py 71402 2013-11-13 08:42:52Z sposs $"
 
 COMPONENT_NAME = 'Dirac'
 
+
 class Dirac(dapi):
     """Dirac is VO specific API Dirac
     
     Adding specific AL functionalities to the Dirac class, and implement the L{preSubmissionChecks} method
     """
-    def __init__(self, withRepo = False, repoLocation = ''):
+    def __init__(self, withRepo=False, repoLocation=''):
         """Internal initialization of the ALDIRAC API.
         """
         #self.dirac = Dirac(WithRepo=WithRepo, RepoLocation=RepoLocation)
-        super(Dirac, self).__init__(withRepo, repoLocation )
+        super(Dirac, self).__init__(withRepo, repoLocation)
         #Dirac.__init__(self, withRepo = withRepo, repoLocation = repoLocation)
         self.log = gLogger
         self.software_versions = {}
         self.checked = False
         self.ops = Operations()
           
-    def preSubmissionChecks(self, job, mode = None):
+    def preSubmissionChecks(self, job, mode=None):
         """Overridden method from DIRAC.Interfaces.API.Dirac
         
         Checks from CS that required software packages are available.
@@ -60,23 +61,24 @@ class Dirac(dapi):
         
         Method used for stand alone checks of job integrity. Calls the formulation error checking of the job
         
-        Actually checks that all input are available and checks that the required software packages are available in the CS
+        Actually checks that all input are available and checks that the required software packages are available in
+        the CS
         @param job: job object
         @return: S_OK() or S_ERROR()  
         """
         try:
             formulationErrors = job._getErrors()
         except Exception, x:
-            self.log.verbose( 'Could not obtain job errors:%s' % ( x ) )
+            self.log.verbose('Could not obtain job errors:%s' % x)
             formulationErrors = {}
         
         if formulationErrors:
             for method, errorList in formulationErrors.items():
-                self.log.error( '>>>> Error in %s() <<<<\n%s' % ( method, string.join( errorList, '\n' ) ) )
-            return S_ERROR( formulationErrors )
-        return self.preSubmissionChecks(job, mode = '')
+                self.log.error('>>>> Error in %s() <<<<\n%s' % (method, string.join(errorList, '\n')))
+            return S_ERROR(str(formulationErrors))
+        return self.preSubmissionChecks(job, mode='')
     
-    def retrieveRepositoryOutputDataLFNs(self, requestedStates = ['Done']):
+    def retrieveRepositoryOutputDataLFNs(self, requestedStates=['Done']):
         """Helper function
         
         Get the list of uploaded output data for a set of jobs in a repository
@@ -90,11 +92,11 @@ class Dirac(dapi):
             gLogger.warn( "No repository is initialised" )
             return S_OK()
         jobs = self.jobRepo.readRepository()['Value']
-        for jobID in sortList( jobs.keys() ):
+        for jobID in sortList(jobs.keys()):
             jobDict = jobs[jobID]
-            if jobDict.has_key( 'State' ) and ( jobDict['State'] in requestedStates ):
-                if ( jobDict.has_key( 'UserOutputData' ) and ( not int( jobDict['UserOutputData'] ) ) ) or \
-                ( not jobDict.has_key( 'UserOutputData' ) ):
+            if jobDict.has_key('State') and ( jobDict['State'] in requestedStates):
+                if (jobDict.has_key('UserOutputData') and (not int(jobDict['UserOutputData']))) or \
+                ( not jobDict.has_key('UserOutputData')):
                     params = self.parameters(int(jobID))
                     if params['OK']:
                         if params['Value'].has_key('UploadedOutputData'):
@@ -109,22 +111,22 @@ class Dirac(dapi):
         """
         #Start by taking care of sandbox
         if hasattr(job, "inputsandbox"):
-            if type( job.inputsandbox ) == list and len( job.inputsandbox ):
+            if type(job.inputsandbox) == list and len(job.inputsandbox):
                 found_list = False
                 for items in job.inputsandbox:
-                    if type(items) == type([]):#We fix the SB in the case is contains a list of lists
+                    if isinstance(items, list):  # We fix the SB in the case is contains a list of lists
                         found_list = True
                         for f in items:
-                            if type(f) == type([]):
+                            if isinstance(f, list):
                                 return S_ERROR("Too many lists of lists in the input sandbox, please fix!")
                             job.inputsandbox.append(f)
                         job.inputsandbox.remove(items)
-                resolvedFiles = job._resolveInputSandbox( job.inputsandbox )
+                resolvedFiles = job._resolveInputSandbox(job.inputsandbox)
                 if found_list:
                     self.log.warn("Input Sandbox contains list of lists. Please avoid that.")
-                fileList = string.join( resolvedFiles, ";" )
+                fileList = string.join(resolvedFiles, ";")
                 description = 'Input sandbox file list'
-                job._addParameter( job.workflow, 'InputSandbox', 'JDL', fileList, description )
+                job._addParameter(job.workflow, 'InputSandbox', 'JDL', fileList, description)
               
         res = self.checkInputSandboxLFNs(job)
         if not res['OK']:
@@ -174,7 +176,8 @@ class Dirac(dapi):
         @return: S_OK() or S_ERROR()
         """
         if path.find("//") > -1 or path.find("/./") > -1 or path.find("/../") > -1:
-            self.log.error("OutputPath of setOutputData() contains invalid characters, please remove any //, /./, or /../")
+            self.log.error("OutputPath of setOutputData() contains invalid characters, "
+                           "please remove any //, /./, or /../")
             return S_ERROR("Invalid path")
         path = path.rstrip()
         if path[-1] == "/":

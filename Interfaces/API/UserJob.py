@@ -20,17 +20,18 @@ import types
 
 __RCSID__ = "$Id: $"
 
+
 class UserJob(Job):
     """ User job class. To be used by users, not for production.
     """
-    def __init__(self, script = None):
-        super(UserJob, self).__init__( script )
+    def __init__(self, script=None):
+        super(UserJob, self).__init__(script)
         self.type = 'User'
         self.diracinstance = None
         self.usergroup = ['user']
         self.proxyinfo = getProxyInfo()
      
-    def submit(self, diracinstance = None, mode = "wms"):
+    def submit(self, diracinstance=None, mode="wms"):
         """ Submit call: when your job is defined, and all applications are set, you need to call this to
         add the job to DIRAC.
         """
@@ -38,8 +39,8 @@ class UserJob(Job):
         if not self.proxyinfo['OK']:
             self.log.error("Not allowed to submit a job, you need one of %s proxies." % self.usergroup)
             return self._reportError("Not allowed to submit a job, you need one of %s proxies." % self.usergroup,
-                                   self.__class__.__name__)
-        if self.proxyinfo['Value'].has_key('group'):
+                                     self.__class__.__name__)
+        if 'group' in self.proxyinfo['Value']:
             group = self.proxyinfo['Value']['group']
             if not group in self.usergroup:
                 self.log.error("Not allowed to submit a job, you need one of %s proxies." % self.usergroup)
@@ -60,7 +61,7 @@ class UserJob(Job):
         return self.diracinstance.submit(self, mode)
         
     #############################################################################
-    def setInputData( self, lfns ):
+    def setInputData(self, lfns):
         """Helper function.
         
            Specify input data by Logical File Name (LFN).
@@ -81,28 +82,28 @@ class UserJob(Job):
             #resolution of the metadata in the InputFilesUtilities
             inputDataStr = ';'.join( inputData )
             description = 'List of input data specified by LFNs'
-            self._addParameter( self.workflow, 'InputData', 'JDL', inputDataStr, description )
-        elif type( lfns ) == type( ' ' ):  #single LFN
+            self._addParameter(self.workflow, 'InputData', 'JDL', inputDataStr, description)
+        elif isinstance(lfns, str):  # single LFN
             description = 'Input data specified by LFN'
-            self._addParameter( self.workflow, 'InputData', 'JDL', lfns, description )
+            self._addParameter(self.workflow, 'InputData', 'JDL', lfns, description)
         else:
-            kwargs = {'lfns':lfns}
-            return self._reportError( 'Expected lfn string or list of lfns for input data', **kwargs )
+            kwargs = {'lfns': lfns}
+            return self._reportError('Expected lfn string or list of lfns for input data', **kwargs)
         
         return S_OK()
     
     def setInputSandbox(self, flist):
         """ Mostly inherited from DIRAC.Job
         """
-        if type(flist) == type(""):
+        if isinstance(flist, str):
             flist = [flist]
-        if not type(flist) == type([]) :
+        if not isinstance(flist, list):
             return self._reportError("File passed must be either single file or list of files.") 
         self.inputsandbox.extend(flist)
         return S_OK()
     
     #############################################################################
-    def setOutputData(self, lfns, OutputPath = '', OutputSE = ['']):
+    def setOutputData(self, lfns, OutputPath='', OutputSE=['']):
         """Helper function, used in preference to Job.setOutputData() for ILC.
         
            For specifying output data to be registered in Grid storage.  If a list
@@ -127,7 +128,7 @@ class UserJob(Job):
             outputDataStr = ';'.join(lfns)
             description = 'List of output data files'
             self._addParameter(self.workflow, 'UserOutputData', 'JDL', outputDataStr, description)
-        elif type(lfns) == type(" "):
+        elif isinstance(lfns, str):
             description = 'Output data file'
             self._addParameter(self.workflow, 'UserOutputData', 'JDL', lfns, description)
         else:
@@ -137,7 +138,7 @@ class UserJob(Job):
             description = 'User specified Output SE'
             if type(OutputSE) in types.StringTypes:
                 OutputSE = [OutputSE]
-            elif type(OutputSE) != types.ListType:
+            elif not isinstance(OutputSE, list):
                 return self._reportError('Expected string or list for OutputSE', **kwargs)
             OutputSE = ';'.join(OutputSE)
             self._addParameter(self.workflow, 'UserOutputSE', 'JDL', OutputSE, description)
@@ -150,7 +151,7 @@ class UserJob(Job):
             while OutputPath[0] == '/': 
                 OutputPath = OutputPath[1:]
             while OutputPath.count('//'):
-                OutputPath.replace('//','/')
+                OutputPath.replace('//', '/')
             vo = getVOForGroup(self.proxyinfo['Value']['group'])
             vostring = '%s/user' % vo
             if OutputPath.count(vostring):
@@ -160,7 +161,7 @@ class UserJob(Job):
         return S_OK()
     
     #############################################################################
-    def setOutputSandbox( self, files ):
+    def setOutputSandbox(self, files):
         """Helper function.
         
            Specify output sandbox files.  If specified files are over 10MB, these
@@ -176,15 +177,15 @@ class UserJob(Job):
            @type files: Single string or list of strings ['','']
         
         """
-        if type( files ) == list and len( files ):
-            fileList = ";".join( files )
+        if isinstance(files, list) and len( files ):
+            fileList = ";".join(files)
             description = 'Output sandbox file list'
-            self._addParameter( self.workflow, 'OutputSandbox', 'JDL', fileList, description )
-        elif type( files ) == type( " " ):
+            self._addParameter(self.workflow, 'OutputSandbox', 'JDL', fileList, description)
+        elif isinstance(files, str):
             description = 'Output sandbox file'
-            self._addParameter( self.workflow, 'OutputSandbox', 'JDL', files, description )
+            self._addParameter( self.workflow, 'OutputSandbox', 'JDL', files, description)
         else:
-            kwargs = {'files' : files}
-            return self._reportError( 'Expected file string or list of files for output sandbox contents', **kwargs )
+            kwargs = {'files': files}
+            return self._reportError('Expected file string or list of files for output sandbox contents', **kwargs)
         
         return S_OK()

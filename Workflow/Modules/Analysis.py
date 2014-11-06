@@ -1,8 +1,8 @@
-'''
+"""
 Created on May 16, 2014
 
 @author: stephanep
-'''
+"""
 from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC.Core.Utilities.ReturnValues import S_OK, S_ERROR
 from DIRAC import gLogger
@@ -17,11 +17,12 @@ import random
 from DIRAC.Core.Utilities import DEncode
 from DIRAC.RequestManagementSystem.Client.ReqClient import ReqClient
 
+
 class Analysis(ModuleBase):
-    '''
-    Analysis module: extracts info from the file produced by the SewlabPostProcess 
+    """
+    Analysis module: extracts info from the file produced by the SewlabPostProcess
     Send it to the DB if requested by Job.
-    '''
+    """
 
 
     def __init__(self):
@@ -50,7 +51,8 @@ class Analysis(ModuleBase):
             return res
         
         if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
-            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
+            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'],
+                                                                         self.stepStatus['OK']))
             return S_OK('Analysis should not proceed as previous step did not end properly')
         try:
             inf = open(self.InputFile[0], "rb")
@@ -93,12 +95,12 @@ class Analysis(ModuleBase):
         lumL_05_min = resdict['solution']['photonMesh'][i05]/(0.124e-3)
         lumL_05_max = resdict['solution']['photonMesh'][i05b]/(0.124e-3)
         
-        self.log.info("Lum found: max, 0.85_min, 0.85_max, 0.5_min, 0.5_max:", str([lumL_max, lumL_085_min, lumL_085_max, lumL_05_min, lumL_05_max]))
+        self.log.info("Lum found: max, 0.85_min, 0.85_max, 0.5_min, 0.5_max:", str([lumL_max, lumL_085_min,
+                                                                                    lumL_085_max, lumL_05_min,
+                                                                                    lumL_05_max]))
 
         max_gain = max(resdict['solution']['netLGain'])
-
-
-        n_up = 9 #GET from DB or from Job def.
+        n_up = 9  # GET from DB or from Job def.
         best1 = best2 = best3 = 0.0
         trans1 = trans2 = trans3 = 0.0
         pdict = {}
@@ -124,13 +126,13 @@ class Analysis(ModuleBase):
             t_v = []
             for i in range(len(resdict['model']['icDipoles'][0])):
                 t_v.append(resdict['model']['icDipoles'][0][i])
-                if (i+1)%n_cols == 0:
+                if (i+1) % n_cols == 0:
                     dipoles_array.append(t_v)
                     t_v = []
             upper_vals = dipoles_array[n_up]
             v_dict = []
             for i in good_k:
-                v_dict.append((abs(upper_vals[i]),i))
+                v_dict.append((abs(upper_vals[i]), i))
             copy_sorted = sorted(v_dict)
             best1 = copy_sorted[-1][0]
             best2 = copy_sorted[-2][0]
@@ -194,15 +196,16 @@ class Analysis(ModuleBase):
             self.log.info("This job shouldn't store its output to the DB")
         return S_OK()
 
+
 def _sendToFailover( rpcStub, jobname):
     """ Create a ForwardDISET operation for failover
     """
     request = Request()
-    request.RequestName = "Analysis.%s" % ( jobname )
+    request.RequestName = "Analysis.%s" % (jobname)
     forwardDISETOp = Operation()
     forwardDISETOp.Type = "ForwardDISET"
-    forwardDISETOp.Arguments = DEncode.encode( rpcStub )
-    request.addOperation( forwardDISETOp )
+    forwardDISETOp.Arguments = DEncode.encode(rpcStub)
+    request.addOperation(forwardDISETOp)
     
-    return ReqClient().putRequest( request )
+    return ReqClient().putRequest(request)
 

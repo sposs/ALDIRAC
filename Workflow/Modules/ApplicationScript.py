@@ -1,14 +1,14 @@
 #####################################################
 # $HeadURL: $
 #####################################################
-'''
+"""
 Run any application provided by the user. Is used when a specific environment is needed .
 
 @since: Jul 12, 2010
 @since: Feb 6, 2014
 
 @author: sposs
-'''
+"""
 __RCSID__ = "$Id: $"
 
 import os, re, types, shutil
@@ -16,23 +16,24 @@ from DIRAC.Core.Utilities.Subprocess                      import shellCall
 from ALDIRAC.Workflow.Modules.ModuleBase                  import ModuleBase
 from DIRAC                                                import S_OK, S_ERROR, gLogger
 
+
 class ApplicationScript(ModuleBase):
     """ Default application environment. Called GenericApplication in the Interface.
     """
     def __init__(self):
         super(ApplicationScript, self).__init__()
         self.enable = True 
-        self.log = gLogger.getSubLogger( "ScriptAnalysis" )
+        self.log = gLogger.getSubLogger("ScriptAnalysis")
         self.script = None
         self.arguments = ''
         self.applicationName = 'Application script'
         self.applicationVersion = ''
       
     def applicationSpecificInputs(self):
-        self.log.info("The arguments are %s"% self.arguments)
+        self.log.info("The arguments are %s" % self.arguments)
         if 'ParametricParameters' in self.workflow_commons:
             parametric = ' '
-            if type(self.workflow_commons['ParametricParameters']) == types.ListType:
+            if isinstance(self.workflow_commons['ParametricParameters'], list):
                 parametric = " ".join(self.workflow_commons['ParametricParameters'])
             else:
                 parametric = self.workflow_commons['ParametricParameters']
@@ -62,10 +63,10 @@ class ApplicationScript(ModuleBase):
             return self.result
         
         if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
-            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'], self.stepStatus['OK']))
+            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'],
+                                                                         self.stepStatus['OK']))
             return S_OK('ApplicationScript should not proceed as previous step did not end properly')
-        
-        
+
         Cmd = []
         if re.search('.py$', self.script):
             Cmd.append('python')
@@ -76,7 +77,7 @@ class ApplicationScript(ModuleBase):
         Cmd.append(self.extraCLIarguments)
         
         command = ' '.join(Cmd)
-        self.log.info( 'Command = %s' % (command))  #Really print here as this is useful to see
+        self.log.info('Command = %s' % (command))  # Really print here as this is useful to see
         
         com = []
         cmdSep = 'echo "%s"' % ('=' * 50)
@@ -93,7 +94,7 @@ class ApplicationScript(ModuleBase):
         finalCommand = ';'.join(com)
         
         self.stdError = ''    
-        result = shellCall(0, finalCommand, callbackFunction = self.redirectLogOutput , bufferLimit = 20971520)
+        result = shellCall(0, finalCommand, callbackFunction=self.redirectLogOutput, bufferLimit=20971520)
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
             return S_ERROR('Problem Executing Application')
@@ -103,22 +104,24 @@ class ApplicationScript(ModuleBase):
         status = resultTuple[0]
         # stdOutput = resultTuple[1]
         # stdError = resultTuple[2]
-        self.log.info( "Status after %s execution is %s" %(os.path.basename(self.script), str(status)) )
+        self.log.info("Status after %s execution is %s" % (os.path.basename(self.script), str(status)))
         failed = False
         if status != 0:
-            self.log.info( "%s execution completed with non-zero status:" % os.path.basename(self.script) )
+            self.log.info("%s execution completed with non-zero status:" % os.path.basename(self.script))
             failed = True
         elif len(self.stdError) > 0:
-            self.log.info( "%s execution completed with application warning:" % os.path.basename(self.script) )
+            self.log.info("%s execution completed with application warning:" % os.path.basename(self.script))
             self.log.info(self.stdError)
         else:
-            self.log.info( "%s execution completed successfully:" % os.path.basename(self.script) )
+            self.log.info("%s execution completed successfully:" % os.path.basename(self.script))
         
-        if failed == True:
-            self.log.error( "==================================\n StdError:\n" )
-            self.log.error( self.stdError )
+        if failed:
+            self.log.error("==================================\n StdError:\n")
+            self.log.error(self.stdError)
             return S_ERROR('%s Exited With Status %s' % (os.path.basename(self.script), status))
         
         #Above can't be removed as it is the last notification for user jobs
-        self.setApplicationStatus('%s (%s %s) Successful' %(os.path.basename(self.script), self.applicationName, self.applicationVersion))
-        return S_OK('%s (%s %s) Successful' % (os.path.basename(self.script), self.applicationName, self.applicationVersion))
+        self.setApplicationStatus('%s (%s %s) Successful' % (os.path.basename(self.script), self.applicationName,
+                                                             self.applicationVersion))
+        return S_OK('%s (%s %s) Successful' % (os.path.basename(self.script), self.applicationName,
+                                               self.applicationVersion))
