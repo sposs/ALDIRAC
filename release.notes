@@ -1,3 +1,8 @@
+[v1r3p0]
+
+Added auto start of VM when new tasks are created. Needs more testing.
+Move to DIRAC v6r11
+
 [v1r2p2]
 
 Testing steering file handling

@@ -12,5 +12,5 @@ su dirac -c"chown 0400 hostkey.pem"
 cd /opt/dirac
 wget --no-check-certificate -O dirac-install 'https://github.com/DIRACGrid/DIRAC/raw/integration/Core/scripts/dirac-install.py'
 chmod a+x dirac-install
-su dirac -c'python dirac-install -r v6r10p8 -e VMDIRAC'
+su dirac -c'python dirac-install -r v6r11p20 -e VMDIRAC'
 source bashrc
