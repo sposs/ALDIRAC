@@ -293,8 +293,8 @@ class SoftwareInstall(object):
             os.chmod(fname, 0755)
             try:
                 subprocess.check_call(["sh", "-c", fname])
-            except subprocess.CalledProcessError:
-                gLogger.error("Couldn't install pip")
+            except subprocess.CalledProcessError as error:
+                gLogger.error("Couldn't install pip", error)
                 clearLock(lockname)
                 return S_ERROR("Failed installation")
         # now that the local cache is up to date, install the packages.
