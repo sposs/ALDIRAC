@@ -136,8 +136,10 @@ class Simulase(ModuleBase):
                                                                        self.simulase_binary_path,
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper compile -o ./compile.p "
-                       "-d %s -x %s -m %s -s %s -t %s -f %s -p %s -b %s %s"
-                       "%s %s" % (self.design_xml, self.SteeringFile, self.material_xml, self.sheet_density,
+                       "-d %s %s %s -s %s -t %s -f %s -p %s -b %s %s"
+                       "%s %s" % (self.design_xml, ("-x %s" % self.SteeringFile if self.SteeringFile else ""),
+                                  ("-m %s" % self.material_xml if self.material_xml else ""),
+                                  self.sheet_density,
                                   self.temperature, self.field, self.polarization, self.broadening,
                                   " ".join(self.list_modifiers),
                                   path_opts, deb_opts))

@@ -606,10 +606,10 @@ class Simulase(Application):
         if not self.Version:
             vers = self.ops.getValue("Simulase/Version", "")
             self.Version = vers
-        if not self.SteeringFile:
-            return S_ERROR("Missing options file")
-        if not self.MaterialXML:
-            return S_ERROR("Missing material XML")
+        #if not self.SteeringFile:
+        #    return S_ERROR("Missing options file")
+        #if not self.MaterialXML:
+        #    return S_ERROR("Missing material XML")
         if not self.DesignXML:
             return S_ERROR("Missing Design XML")
         if self.Temperature is None:
