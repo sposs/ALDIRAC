@@ -1,6 +1,11 @@
+[v1r4p2]
+
+Fix import bug
+
 [v1r4p1]
 
 Fix several little issues for simulase
+
 [v1r4p0]
 
 Added support for Simulase. Needs checking!
