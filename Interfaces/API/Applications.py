@@ -538,7 +538,7 @@ class Simulase(Application):
             self._log.warn("Design XML not found locally")
 
     def setMaterialXML(self, matxml):
-        self.MaterialXML(matxml)
+        self.MaterialXML = matxml
         if os.path.exists(matxml):
             self.inputSB.append(matxml)
         else:

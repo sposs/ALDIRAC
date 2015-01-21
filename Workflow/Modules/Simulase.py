@@ -5,6 +5,7 @@ Created by stephanep on 15.01.15
 Copyright 2015 Alpes Lasers SA, Neuchatel, Switzerland
 """
 import os
+import shutil
 from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC.Core.Utilities.Subprocess import shellCall
@@ -38,6 +39,7 @@ class Simulase(ModuleBase):
         self.simulase_binary_path = ""
         self.simudb = SimuDBClient()
         self.taskname = ""
+        self.parameterchanges = {}
 
     def applicationSpecificInputs(self):
         if not self.OutputFile:
@@ -53,6 +55,21 @@ class Simulase(ModuleBase):
                 self.list_modifiers = ["--%s %s" % (a, b) for a, b in vals]
         return S_OK()
 
+    def applicationSpecificMoveBefore(self):
+        if self.material_xml:
+            mat_xml = os.path.basename(self.material_xml)
+            if os.path.exists(os.path.join(self.basedirectory, mat_xml)):
+                shutil.copy(os.path.join(self.basedirectory, mat_xml), mat_xml)
+                self.material_xml = mat_xml
+
+        des_xml = os.path.basename(self.design_xml)
+        if os.path.exists(os.path.join(self.basedirectory, des_xml)):
+            shutil.copy(os.path.join(self.basedirectory, des_xml), des_xml)
+            self.design_xml = des_xml
+        else:
+            return S_ERROR("Cannot find the design XML")
+        return S_OK()
+
     def runIt(self):
         """
         Execute the module content
@@ -63,6 +80,7 @@ class Simulase(ModuleBase):
         if bin_dir_env not in os.environ:
             self.log.error("Environment doesn't know the Simulase directory")
             return S_ERROR("Environment doesn't know the Simulase directory")
+        self.log.info("Software found at ", os.environ[bin_dir_env])
         self.simulase_binary_path = os.environ[bin_dir_env]
         if not self.license_server_url:
             self.log.error("Cannot find license server URL")
@@ -138,14 +156,14 @@ class Simulase(ModuleBase):
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper compile -o ./compile.p "
                        "-d %s %s %s -s %s -t %s -f %s -p %s -b %s %s"
-                       "%s %s" % (self.design_xml, ("-x %s" % self.SteeringFile if self.SteeringFile else ""),
-                                  ("-m %s" % self.material_xml if self.material_xml else ""),
+                       "%s %s" % (self.design_xml, ("-x %s" % os.path.abspath(self.SteeringFile) if self.SteeringFile else ""),
+                                  ("-m %s" % os.path.abspath(self.material_xml) if self.material_xml else ""),
                                   self.sheet_density,
                                   self.temperature, self.field, self.polarization, self.broadening,
                                   " ".join(self.list_modifiers),
                                   path_opts, deb_opts))
             script.write("\n".join(cmd))
-        os.chmod(script_name, "0755")
+        os.chmod(script_name, 0755)
         return script_name
 
     def run_script(self):
@@ -161,7 +179,7 @@ class Simulase(ModuleBase):
             cmd.append("simulase_wrapper run -l %s -i ./compile.p -o ./run.p "
                        "-w ./run_dir %s %s" % (self.license_server_url, path_opts, deb_opts))
             script.write("\n".join(cmd))
-        os.chmod(script_name, "0755")
+        os.chmod(script_name, 0755)
         return script_name
 
     def post_process(self):
@@ -177,7 +195,7 @@ class Simulase(ModuleBase):
             cmd.append("simulase_wrapper postprocess -l %s -w ./run_dir -o %s "
                        "%s %s" % (self.license_server_url, self.OutputFile, path_opts, deb_opts))
             script.write("\n".join(cmd))
-        os.chmod(script_name, "0755")
+        os.chmod(script_name, 0755)
         return script_name
 
     def report_fail(self, state):
