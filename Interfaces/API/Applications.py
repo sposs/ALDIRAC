@@ -514,6 +514,121 @@ class NextNano(Application):
         return S_OK() 
 
 
+class Simulase(Application):
+    def __init__(self, pdict=None):
+        self.DesignXML = None
+        self.MaterialXML = None
+        self.Temperature = None
+        self.Field = None
+        self.Polarization = None
+        self.SheetDensity = None
+        self.Broadening = None
+        super(Simulase, self).__init__(pdict)
+        self._modulename = "Simulase"
+        self.appname = "simulase"
+        self._moduledescription = 'Run simulase'
+        self.ops = Operations()
+
+    def setDesignXML(self, design_xml):
+        self.DesignXML = design_xml
+        if os.path.exists(design_xml):
+            self.inputSB.append(design_xml)
+        else:
+            self._log.warn("Design XML not found locally")
+
+    def setMaterialXML(self, matxml):
+        self.MaterialXML(matxml)
+        if os.path.exists(matxml):
+            self.inputSB.append(matxml)
+        else:
+            self._log.warn("Material XML not found locally")
+
+    def setTemperature(self, temp):
+        self.Temperature = temp
+
+    def setField(self, field):
+        self.Field = field
+
+    def setPolarization(self, polar):
+        self.Polarization = polar
+
+    def setSheetDensity(self, sd):
+        self.SheetDensity = sd
+
+    def setBroadening(self, broadening):
+        self.Broadening = broadening
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("design_xml", "", "string", "", "", False, False, "Design XML"))
+        m1.addParameter(Parameter("material_xml", "", "string", "", "", False, False, "Material XML"))
+        m1.addParameter(Parameter("temperature", 300, "float", "", "", False, False, "temperature"))
+        m1.addParameter(Parameter("field", 0., "float", "", "", False, False, "electrical field"))
+        m1.addParameter(Parameter("polarization", "te", "string", "", "", False, False, "Polarization"))
+        m1.addParameter(Parameter("sheet_density", 0., "float", "", "", False, False, "Sheet density (in 10e12[cm-2])"))
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
+        return m1
+
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("debug", self.Debug)
+        moduleinstance.setValue("design_xml", self.DesignXML)
+        moduleinstance.setValue("material_xml", self.MaterialXML)
+        moduleinstance.setValue("temperature", self.Temperature)
+        moduleinstance.setValue("field", self.Field)
+        moduleinstance.setValue("polarization", self.Polarization)
+        moduleinstance.setValue("sheet_density", self.SheetDensity)
+
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks
+        """
+        if not self.Version:
+            vers = self.ops.getValue("Simulase/Version", "")
+            self.Version = vers
+        if not self.SteeringFile:
+            return S_ERROR("Missing options file")
+        if not self.MaterialXML:
+            return S_ERROR("Missing material XML")
+        if not self.DesignXML:
+            return S_ERROR("Missing Design XML")
+        if self.Temperature is None:
+            return S_ERROR("Temperature MUST be set")
+        if self.SheetDensity is None:
+            return S_ERROR("Sheet carrier density MUST be set")
+        if self.Polarization is None:
+            return S_ERROR("Polarization MUST be set")
+        elif self.Polarization not in ["te", "tm"]:
+            return S_ERROR("Polarization must be either 'te' or 'tm'")
+        if self.Field is None:
+            return S_ERROR("Electrical field MUST be set")
+        if self.Broadening is None:
+            return S_ERROR("Broadening MUST be set")
+
+        return S_OK()
+
+    def _checkWorkflowConsistency(self):
+        return self._checkRequiredApp()
+
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if type(self._linkedidx) == types.IntType:
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(),
+                                 "OutputFile")
+        return S_OK()
+
 ######################################################################################################
 from DIRAC import gLogger
 
@@ -540,6 +655,16 @@ def get_app_list(app_dict):
             app_list.append(appAna)
             app3 = RegisterOutput()
             app3.getInputFromApp(app2)
+            app_list.append(app3)
+        elif name.lower() == "simulase":
+            app0 = SetJobName()
+            app_list.append(app0)
+            app1 = Simulase()
+            app1.setVersion(version)
+            app1.setOutputFile("default.p")
+            app_list.append(app1)
+            app3 = RegisterOutput()
+            app3.getInputFromApp(app1)
             app_list.append(app3)
         else:
             gLogger.error("Invalid application name")

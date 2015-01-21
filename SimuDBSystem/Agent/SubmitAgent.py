@@ -210,7 +210,7 @@ class SubmitAgent(AgentModule):
             #job.setJobGroup(group_name)
             path = resdict["lfnpath"]
             path = path.strip()
-            if resdict["priority"]>max_prio:
+            if resdict["priority"] > max_prio:
                 #select the highest priority as the job's priority
                 max_prio = resdict["priority"]
             #job.setName("%s" % (simid))
@@ -234,7 +234,15 @@ class SubmitAgent(AgentModule):
                     app.setSteeringFile("LFN:"+path)
                     my_params = self.simudb.get_sewlabrun_parameters(simid)
                     app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
-                    
+                if app.appname.lower() == "simulase":
+                    is_sewlab = True
+                    jobtype = "sewlab"
+                    if not path:
+                        self.log.error("LFN Path is empty, not submitting")
+                        failed = True
+                    app.setSteeringFile("LFN:"+path)
+                    my_params = self.simudb.get_simulase_parameters(simid)
+                    app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
                 if app.appname.lower() == "analysis":
                     if "store" in my_params and my_params['store']:
                         app.setStore() 
