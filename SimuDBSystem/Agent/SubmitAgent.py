@@ -58,13 +58,16 @@ class SubmitAgent(AgentModule):
         self.combined = CombinedInterface(create_connection(testmode = testmode))
         self.destination_sites = {}
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
-        self.log.info("Destination sites for Sewlab", self.destination_sites["sewlab"])
+        self.destination_sites["simulase"] = Operations().getValue("Simulase/DestinationSite", ["AL.farm.ch"])
+        self.log.info("Destination sites:", str(self.destination_sites))
         self.submit_pools = {}
         self.submit_pools["sewlab"] = Operations().getValue("SewLab/SubmitPools", "")
-        self.log.info("SubmitPools for Sewlab", self.submit_pools["sewlab"])
+        self.submit_pools["simulase"] = Operations().getValue("Simulase/SubmitPools", "")
+        self.log.info("SubmitPools", str(self.submit_pools))
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
-        self.log.info("MaxCPUTime for Sewlab", self.cpu_times["sewlab"])
+        self.cpu_times["simulase"] = Operations().getValue("Simulase/MaxCPUTime")
+        self.log.info("MaxCPUTimes: ", str(self.cpu_times))
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
         self.storageElement = Operations().getValue("StorageElement", "AL-DIP")
         self.group_size = Operations().getValue("SewLab/GroupSize", 10)
@@ -98,7 +101,7 @@ class SubmitAgent(AgentModule):
         simus_ids = {}
         total_tasks = 0 
         for simugroupid in simusdict.keys():
-            if not simugroupid in simus_ids:
+            if simugroupid not in simus_ids:
                 simus_ids[simugroupid] = []
             if self.simudb.get_rungroup_status(simugroupid) == "new":
                 res = self._handle_defaultXML(simugroupid)
@@ -139,7 +142,7 @@ class SubmitAgent(AgentModule):
             if not res["Message"].count("This file GUID already exists for another file"):
                 self.log.error("Failed to upload default.xml to SE:", res["Message"])
                 return S_ERROR("Failed to upload default xml")
-        self.log.info("Uploaded following file:", final_path )
+        self.log.info("Uploaded following file:", final_path)
         os.unlink(input_xml_file)
         self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
         return S_OK()
@@ -236,13 +239,18 @@ class SubmitAgent(AgentModule):
                     app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
                 if app.appname.lower() == "simulase":
                     is_sewlab = True
-                    jobtype = "sewlab"
+                    jobtype = "simulase"
                     if not path:
                         self.log.error("LFN Path is empty, not submitting")
                         failed = True
-                    app.setSteeringFile("LFN:"+path)
+                    app.setDesignXML("LFN:"+path)
                     my_params = self.simudb.get_simulase_parameters(simid)
-                    app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
+                    app.setModifiers(my_params['modifiers'])
+                    app.setTemperature(my_params['temperature'])
+                    app.setField(my_params['efield'])
+                    app.setSheetDensity(my_params['sheet_density'])
+                    app.setBroadening(my_params['broadening'])
+                    app.setPolarization(my_params['polarization'])
                 if app.appname.lower() == "analysis":
                     if "store" in my_params and my_params['store']:
                         app.setStore() 
@@ -259,6 +267,10 @@ class SubmitAgent(AgentModule):
         #if self.submit_pools[jobtype]:
         job.setSubmitPool(self.submit_pools[jobtype])
         job.setCPUTime(n_sub_jobs * self.cpu_times[jobtype])
-        job.setOutputSandbox(["*.log", "*.sample", "*.script"])
+        if jobtype == "sewlab":
+            outsb = ["*.log", "*.sample", "*.script"]
+        else:
+            outsb = ['*.log']
+        job.setOutputSandbox(outsb)
         job.setLogLevel(self.verbosity)
         return S_OK(job)

@@ -523,6 +523,7 @@ class Simulase(Application):
         self.Polarization = None
         self.SheetDensity = None
         self.Broadening = None
+        self.Modifiers = ""
         super(Simulase, self).__init__(pdict)
         self._modulename = "Simulase"
         self.appname = "simulase"
@@ -531,7 +532,7 @@ class Simulase(Application):
 
     def setDesignXML(self, design_xml):
         self.DesignXML = design_xml
-        if os.path.exists(design_xml):
+        if os.path.exists(design_xml) or design_xml.count("LFN:"):
             self.inputSB.append(design_xml)
         else:
             self._log.warn("Design XML not found locally")
@@ -558,6 +559,12 @@ class Simulase(Application):
     def setBroadening(self, broadening):
         self.Broadening = broadening
 
+    def setModifiers(self, modifier_dict):
+        mod_list = ""
+        for key, value in modifier_dict:
+            mod_list += "%s=%s;" % (key, value)
+        self.Modifiers = mod_list.rstrip(";")
+
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
         m1.addParameter(Parameter("design_xml", "", "string", "", "", False, False, "Design XML"))
@@ -566,6 +573,7 @@ class Simulase(Application):
         m1.addParameter(Parameter("field", 0., "float", "", "", False, False, "electrical field"))
         m1.addParameter(Parameter("polarization", "te", "string", "", "", False, False, "Polarization"))
         m1.addParameter(Parameter("sheet_density", 0., "float", "", "", False, False, "Sheet density (in 10e12[cm-2])"))
+        m1.addParameter(Parameter("modifiers", "", "string", "", "", False, False, "Options modifiers"))
         m1.addParameter(Parameter("debug", False, "bool", "", "", False,
                                   False, "debug mode"))
         return m1
@@ -578,6 +586,7 @@ class Simulase(Application):
         moduleinstance.setValue("field", self.Field)
         moduleinstance.setValue("polarization", self.Polarization)
         moduleinstance.setValue("sheet_density", self.SheetDensity)
+        moduleinstance.setValue("modifiers", self.Modifiers)
 
     def _addParametersToStep(self, stepdefinition):
         res = self._addBaseParameters(stepdefinition)

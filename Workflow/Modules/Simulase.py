@@ -30,6 +30,8 @@ class Simulase(ModuleBase):
         self.polarization = "te"
         self.sheet_density = 10.
         self.broadening = 0.
+        self.modifiers = ""
+        self.list_modifiers = []
         self.ops = Operations()
         self.license_server_url = self.ops.getValue("Simulase/LicenseURL", "")
         self.simulase_binary_path = ""
@@ -43,6 +45,11 @@ class Simulase(ModuleBase):
         if not self.taskname:
             self.taskname = self.workflow_commons.get("TaskName", self.jobName)
 
+        if self.modifiers:
+            mods = self.modifiers.split(";")
+            for items in mods:
+                vals = items.split("=")
+                self.list_modifiers = ["--%s %s" % (a, b) for a, b in vals]
         return S_OK()
 
     def runIt(self):
@@ -129,9 +136,10 @@ class Simulase(ModuleBase):
                                                                        self.simulase_binary_path,
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper compile -o ./compile.p "
-                       "-d %s -x %s -m %s -s %s -t %s -f %s -p %s -b %s "
+                       "-d %s -x %s -m %s -s %s -t %s -f %s -p %s -b %s %s"
                        "%s %s" % (self.design_xml, self.SteeringFile, self.material_xml, self.sheet_density,
                                   self.temperature, self.field, self.polarization, self.broadening,
+                                  " ".join(self.list_modifiers),
                                   path_opts, deb_opts))
             script.write("\n".join(cmd))
         os.chmod(script_name, "0755")
