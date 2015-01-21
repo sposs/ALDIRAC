@@ -82,6 +82,12 @@ class Simulase(ModuleBase):
             return S_ERROR("Environment doesn't know the Simulase directory")
         self.log.info("Software found at ", os.environ[bin_dir_env])
         self.simulase_binary_path = os.environ[bin_dir_env]
+        if not os.path.exists(os.path.join(self.simulase_binary_path, "sus.exe")) \
+                or not os.path.exists(os.path.join(self.simulase_binary_path, "a3d.exe")) \
+                or not os.path.exists(os.path.join(self.simulase_binary_path, "iba.exe")):
+            self.log.error("Binaries cannot be found")
+            return S_ERROR("Binaries cannot be found")
+
         if not self.license_server_url:
             self.log.error("Cannot find license server URL")
             return S_ERROR("Cannot find license server URL")
