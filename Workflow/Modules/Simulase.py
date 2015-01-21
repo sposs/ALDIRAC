@@ -5,12 +5,12 @@ Created by stephanep on 15.01.15
 Copyright 2015 Alpes Lasers SA, Neuchatel, Switzerland
 """
 import os
-from ALDIRAC.Workflow.Modules import ModuleBase
+from ALDIRAC.Workflow.Modules.ModuleBase import ModuleBase
 from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC.Core.Utilities.Subprocess import shellCall
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 
-from DIRAC import S_OK, S_ERROR
+from DIRAC import S_OK, S_ERROR, gLogger
 
 
 __author__ = 'stephanep'
@@ -23,6 +23,7 @@ class Simulase(ModuleBase):
     """
     def __init__(self):
         super(Simulase, self).__init__()
+        self.log = gLogger.getSubLogger("Simulase")
         self.design_xml = ""
         self.material_xml = ""
         self.field = 0.

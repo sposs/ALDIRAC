@@ -528,7 +528,7 @@ class Simulase(Application):
         self._modulename = "Simulase"
         self.appname = "simulase"
         self._moduledescription = 'Run simulase'
-        self.ops = Operations()
+        self._ops = Operations()
 
     def setDesignXML(self, design_xml):
         self.DesignXML = design_xml
@@ -564,6 +564,13 @@ class Simulase(Application):
         for key, value in modifier_dict:
             mod_list += "%s=%s;" % (key, value)
         self.Modifiers = mod_list.rstrip(";")
+
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
 
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
@@ -604,7 +611,7 @@ class Simulase(Application):
         """ Checks
         """
         if not self.Version:
-            vers = self.ops.getValue("Simulase/Version", "")
+            vers = self._ops.getValue("Simulase/Version", "")
             self.Version = vers
         #if not self.SteeringFile:
         #    return S_ERROR("Missing options file")
