@@ -51,8 +51,8 @@ class Simulase(ModuleBase):
         if self.modifiers:
             mods = self.modifiers.split(";")
             for items in mods:
-                vals = items.split("=")
-                self.list_modifiers = ["--%s %s" % (a, b) for a, b in vals]
+                a, b = items.split("=")
+                self.list_modifiers.append("--%s %s" %(a, b))
         return S_OK()
 
     def applicationSpecificMoveBefore(self):
