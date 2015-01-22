@@ -167,7 +167,7 @@ class Simulase(ModuleBase):
             deb_opts = ""
             if self.debug:
                 deb_opts = " -D -v"
-            path_opts = "-S %s/sus.exe -A %s/a3d.exe -I %s/iba.exe" % (self.simulase_binary_path,
+            path_opts = " -S %s/sus.exe -A %s/a3d.exe -I %s/iba.exe" % (self.simulase_binary_path,
                                                                        self.simulase_binary_path,
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper compile -o ./compile.p "
@@ -190,7 +190,7 @@ class Simulase(ModuleBase):
             deb_opts = ""
             if self.debug:
                 deb_opts = " -D -v"
-            path_opts = "-S %s/sus.exe -A %s/a3d.exe -I %s/iba.exe" % (self.simulase_binary_path,
+            path_opts = " -S %s/sus.exe -A %s/a3d.exe -I %s/iba.exe" % (self.simulase_binary_path,
                                                                        self.simulase_binary_path,
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper run -l %s -i ./compile.p -o ./run.p "
@@ -207,7 +207,7 @@ class Simulase(ModuleBase):
             deb_opts = ""
             if self.debug:
                 deb_opts = " -D -v"
-            path_opts = "-S %s/sus.exe -A %s/a3d.exe -I %s/iba.exe" % (self.simulase_binary_path,
+            path_opts = " -S %s/sus.exe -A %s/a3d.exe -I %s/iba.exe" % (self.simulase_binary_path,
                                                                        self.simulase_binary_path,
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper postprocess -l %s -w ./run_dir -o %s "

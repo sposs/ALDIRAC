@@ -516,9 +516,9 @@ class NextNano(Application):
 
 class Simulase(Application):
     def __init__(self, pdict=None):
-        self.DesignXML = None
-        self.MaterialXML = None
-        self.Temperature = None
+        self.DesignXML = ""
+        self.MaterialXML = ""
+        self.Temperature = 300.
         self.Field = None
         self.Polarization = None
         self.SheetDensity = None
