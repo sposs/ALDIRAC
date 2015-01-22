@@ -270,7 +270,7 @@ class SubmitAgent(AgentModule):
         if jobtype == "sewlab":
             outsb = ["*.log", "*.sample", "*.script"]
         else:
-            outsb = ['*.log']
+            outsb = ['*.log', "*.sh"]
         job.setOutputSandbox(outsb)
         job.setLogLevel(self.verbosity)
         return S_OK(job)
