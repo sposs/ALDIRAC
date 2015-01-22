@@ -561,7 +561,7 @@ class Simulase(Application):
 
     def setModifiers(self, modifier_dict):
         mod_list = ""
-        for key, value in modifier_dict:
+        for key, value in modifier_dict.items():
             mod_list += "%s=%s;" % (key, value)
         self.Modifiers = mod_list.rstrip(";")
 
