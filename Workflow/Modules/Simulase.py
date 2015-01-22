@@ -92,9 +92,19 @@ class Simulase(ModuleBase):
             self.log.error("Cannot find license server URL")
             return S_ERROR("Cannot find license server URL")
 
+
         script_name = self.compile_script()
         comm = 'sh -c "./%s"' % script_name
         self.setApplicationStatus('%s compile step %s' % (self.applicationName, self.STEP_NUMBER))
+        if not self.debug:
+            res = self.simudb.setStatus(self.taskname, "running")
+            if not res['OK']:
+                self.log.error("Failed to set status to running:", res["Message"])
+                res = self.simudb.setStatus(self.taskname, "running")
+                if not res['OK']:
+                    self.log.error("Failed again to set status to running:", res["Message"])
+                    self.log.error("Will fail the task")
+                    return S_ERROR("Issues with task state machine")
         result = shellCall(0, comm, callbackFunction=self.redirectLogOutput, bufferLimit=20971520)
         if not result['OK']:
             self.log.error("Application failed :", result["Message"])
