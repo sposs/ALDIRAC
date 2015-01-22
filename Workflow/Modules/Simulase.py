@@ -168,6 +168,7 @@ class Simulase(ModuleBase):
                                   self.temperature, self.field, self.polarization, self.broadening,
                                   " ".join(self.list_modifiers),
                                   path_opts, deb_opts))
+            self.log.info("Will run", cmd[-1])
             script.write("\n".join(cmd))
         os.chmod(script_name, 0755)
         return script_name
@@ -184,6 +185,7 @@ class Simulase(ModuleBase):
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper run -l %s -i ./compile.p -o ./run.p "
                        "-w ./run_dir %s %s" % (self.license_server_url, path_opts, deb_opts))
+            self.log.info("Will run", cmd[-1])
             script.write("\n".join(cmd))
         os.chmod(script_name, 0755)
         return script_name
@@ -200,6 +202,7 @@ class Simulase(ModuleBase):
                                                                        self.simulase_binary_path,)
             cmd.append("simulase_wrapper postprocess -l %s -w ./run_dir -o %s "
                        "%s %s" % (self.license_server_url, self.OutputFile, path_opts, deb_opts))
+            self.log.info("Will run", cmd[-1])
             script.write("\n".join(cmd))
         os.chmod(script_name, 0755)
         return script_name
