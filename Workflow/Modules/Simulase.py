@@ -52,7 +52,11 @@ class Simulase(ModuleBase):
             mods = self.modifiers.split(";")
             for items in mods:
                 a, b = items.split("=")
-                self.list_modifiers.append("--%s %s" %(a, b))
+                if a not in ['skip_auger', "skip_intraband"]:
+                    self.list_modifiers.append("--%s %s" % (a, b))
+                else:
+                    if b in ['True', "TRUE", 1]:
+                        self.list_modifiers.append("--%s" % a)
         return S_OK()
 
     def applicationSpecificMoveBefore(self):
