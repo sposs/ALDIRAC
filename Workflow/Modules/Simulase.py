@@ -167,7 +167,7 @@ class Simulase(ModuleBase):
     def compile_script(self):
         script_name = "simulase_compile_%s.sh" % self.STEP_NUMBER
         with open(script_name, "w") as script:
-            cmd = ["#!/bin/bash"]
+            cmd = ["#!/bin/bash", "unset LD_LIBRARY_PATH"]
             deb_opts = ""
             if self.debug:
                 deb_opts = " -D -v"
@@ -190,7 +190,7 @@ class Simulase(ModuleBase):
     def run_script(self):
         script_name = "simulase_run_%s.sh" % self.STEP_NUMBER
         with open(script_name, "w") as script:
-            cmd = ["#!/bin/bash"]
+            cmd = ["#!/bin/bash", "unset LD_LIBRARY_PATH"]
             deb_opts = ""
             if self.debug:
                 deb_opts = " -D -v"
@@ -207,7 +207,7 @@ class Simulase(ModuleBase):
     def post_process(self):
         script_name = "simulase_postproc_%s.sh" % self.STEP_NUMBER
         with open(script_name, "w") as script:
-            cmd = ["#!/bin/bash"]
+            cmd = ["#!/bin/bash", "unset LD_LIBRARY_PATH"]
             deb_opts = ""
             if self.debug:
                 deb_opts = " -D -v"
