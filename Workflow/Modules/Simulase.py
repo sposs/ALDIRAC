@@ -53,9 +53,10 @@ class Simulase(ModuleBase):
             for items in mods:
                 a, b = items.split("=")
                 self.log.info("'%s' = '%s'" % (a, b))
-                if a == "profile" and b != "None":
-                    self.list_modifiers.append("--profile %s" % b)
-                    continue
+                if a == "profile":
+                    if b != "None":
+                        self.list_modifiers.append("--profile %s" % b)
+                        continue
                 if a not in ['skip_auger', "skip_intraband"]:
                     self.list_modifiers.append("--%s %s" % (a, b))
                 else:
