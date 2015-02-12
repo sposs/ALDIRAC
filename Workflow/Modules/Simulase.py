@@ -52,6 +52,7 @@ class Simulase(ModuleBase):
             mods = self.modifiers.split(";")
             for items in mods:
                 a, b = items.split("=")
+                self.log.info("'%s' = '%s'" % (a, b))
                 if a == "profile" and b != "None":
                     self.list_modifiers.append("--profile %s" % b)
                     continue
