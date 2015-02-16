@@ -73,7 +73,7 @@ class SimuDBHandler(RequestHandler):
         fileSize can be Xbytes or -1 if unknown.
         token is used for access rights confirmation.
         """
-        simu_id = int(fileID.replace(".pkl",""))
+        simu_id = int(fileID.replace(".pkl", ""))
         try: 
             status = gSimuDB.get_run_status(simu_id)  # session is opened
         except Exception as error:

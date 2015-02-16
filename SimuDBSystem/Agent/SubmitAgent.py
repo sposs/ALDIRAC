@@ -54,8 +54,9 @@ class SubmitAgent(AgentModule):
         self.log.info("Testmode is ", testmode)
         self.store_output = self.am_getOption("StoreOutput", True)
         self.log.info("Storing the output always:", self.store_output)
-        self.simudb = SimuInterface(create_connection(testmode = testmode))
-        self.combined = CombinedInterface(create_connection(testmode = testmode))
+        connection = create_connection(testmode=testmode)
+        self.simudb = SimuInterface(connection)
+        self.combined = CombinedInterface(connection)
         self.destination_sites = {}
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
         self.destination_sites["simulase"] = Operations().getValue("Simulase/DestinationSite", ["AL.farm.ch"])
@@ -82,6 +83,7 @@ class SubmitAgent(AgentModule):
             self.simudb.close_session()
             return res
         self.simudb.close_session()
+        connection.close()
         return S_OK()
     
     def _get_new_tasks(self):
