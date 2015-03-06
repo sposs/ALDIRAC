@@ -96,6 +96,8 @@ class Simulase(ModuleBase):
                 or not os.path.exists(os.path.join(self.simulase_binary_path, "a3d.exe")) \
                 or not os.path.exists(os.path.join(self.simulase_binary_path, "iba.exe")):
             self.log.error("Binaries cannot be found")
+            if not self.debug:
+                self.report_fail("Missing binaries")
             return S_ERROR("Binaries cannot be found")
 
         if not self.license_server_url:
