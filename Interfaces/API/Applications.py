@@ -575,6 +575,7 @@ class Simulase(Application):
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
         m1.addParameter(Parameter("design_xml", "", "string", "", "", False, False, "Design XML"))
+        m1.addParameter(Parameter("broadening", 0., "float", "", "", False, False, "broadening"))
         m1.addParameter(Parameter("material_xml", "", "string", "", "", False, False, "Material XML"))
         m1.addParameter(Parameter("temperature", 300, "float", "", "", False, False, "temperature"))
         m1.addParameter(Parameter("field", 0., "float", "", "", False, False, "electrical field"))
@@ -593,6 +594,7 @@ class Simulase(Application):
         moduleinstance.setValue("field", self.Field)
         moduleinstance.setValue("polarization", self.Polarization)
         moduleinstance.setValue("sheet_density", self.SheetDensity)
+        moduleinstance.setValue("broadening", self.Broadening)
         moduleinstance.setValue("modifiers", self.Modifiers)
 
     def _addParametersToStep(self, stepdefinition):
