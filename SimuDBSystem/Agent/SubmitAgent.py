@@ -60,14 +60,17 @@ class SubmitAgent(AgentModule):
         self.destination_sites = {}
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
         self.destination_sites["simulase"] = Operations().getValue("Simulase/DestinationSite", ["AL.farm.ch"])
+        self.destination_sites["lastip"] = Operations().getValue("Lastip/DestinationSite", ["AL.farm.ch"])
         self.log.info("Destination sites:", str(self.destination_sites))
         self.submit_pools = {}
         self.submit_pools["sewlab"] = Operations().getValue("SewLab/SubmitPools", "")
         self.submit_pools["simulase"] = Operations().getValue("Simulase/SubmitPools", "")
+        self.submit_pools["lastip"] = Operations().getValue("Lastip/SubmitPools", "")
         self.log.info("SubmitPools", str(self.submit_pools))
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
         self.cpu_times["simulase"] = Operations().getValue("Simulase/MaxCPUTime")
+        self.cpu_times["lastip"] = Operations().getValue("Lastip/MaxCPUTime")
         self.log.info("MaxCPUTimes: ", str(self.cpu_times))
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
         self.storageElement = Operations().getValue("StorageElement", "AL-DIP")
@@ -253,6 +256,19 @@ class SubmitAgent(AgentModule):
                     app.setSheetDensity(my_params['sheet_density'])
                     app.setBroadening(my_params['broadening'])
                     app.setPolarization(my_params['polarization'])
+                if app.appname.lower() == "lastip":
+                    is_sewlab = True
+                    jobtype = "lastip"
+                    if not path:
+                        self.log.error("LFN Path is empty, not submitting")
+                        failed = True
+                    app.setDesignXML("LFN:"+path)
+                    my_params = self.simudb.get_lastip_parameters(simid)
+                    app.setRunParameters(my_params)
+                    simulase_db = self.simudb.get_lastip_simulase_db(simid)
+                    if simulase_db:
+
+                        app.setSimulaseDB()
                 if app.appname.lower() == "analysis":
                     if "store" in my_params and my_params['store']:
                         app.setStore() 

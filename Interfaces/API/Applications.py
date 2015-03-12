@@ -3,6 +3,7 @@ Created on Feb 6, 2014
 
 @author: stephanep
 '''
+import cjson
 from ALDIRAC.Interfaces.API.Application import Application
 from DIRAC.Core.Workflow.Parameter import Parameter
 from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
@@ -647,6 +648,105 @@ class Simulase(Application):
                                  "OutputFile")
         return S_OK()
 
+
+class Lastip(Application):
+    def __init__(self, pdict=None):
+        self.DesignXML = ""
+        self.MaterialXML = ""
+        self.Temperature = 300.
+        self.Field = None
+        self.Polarization = None
+        self.SheetDensity = None
+        self.Broadening = None
+        self.Modifiers = ""
+        self.RunParameters = ""
+        super(Lastip, self).__init__(pdict)
+        self._modulename = "Lastip"
+        self.appname = "lastip"
+        self._moduledescription = 'Run lastip'
+        self._ops = Operations()
+
+    def setDesignXML(self, design_xml):
+        self.DesignXML = design_xml
+        if os.path.exists(design_xml) or design_xml.count("LFN:"):
+            self.inputSB.append(design_xml)
+        else:
+            self._log.warn("Design XML not found locally")
+
+    def setSimulaseDB(self, simulase_db):
+        self.SimulaseDB = simulase_db
+        if os.path.exists(simulase_db) or simulase_db.count("LFN:"):
+            self.inputSB.append(simulase_db)
+        else:
+            self._log.warn("Simulase DB not found locally")
+
+    def setRunParameters(self, run_params):
+        if isinstance(run_params, basestring):
+            self.RunParameters = run_params
+        else:
+            self.RunParameters = cjson.encode(run_params)
+
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("design_xml", "", "string", "", "", False, False, "Design XML"))
+        m1.addParameter(Parameter("simulase_db", "", "string", "", "", False, False, "Simulase DB"))
+        m1.addParameter(Parameter("run_parameters", "", "string", "", "", False, False, "Run parameters"))
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
+        return m1
+
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("debug", self.Debug)
+        moduleinstance.setValue("design_xml", self.DesignXML)
+        moduleinstance.setValue("simulase_db", self.SimulaseDB)
+        moduleinstance.setValue("run_parameters", self.RunParameters)
+
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks
+        """
+        if not self.Version:
+            vers = self._ops.getValue("Lastip/Version", "")
+            self.Version = vers
+        #if not self.SteeringFile:
+        #    return S_ERROR("Missing options file")
+        #if not self.MaterialXML:
+        #    return S_ERROR("Missing material XML")
+        if not self.DesignXML:
+            return S_ERROR("Missing Design XML")
+        if not self.RunParameters:
+            return S_ERROR("Missing run parameters")
+        return S_OK()
+
+    def _checkWorkflowConsistency(self):
+        return self._checkRequiredApp()
+
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if type(self._linkedidx) == types.IntType:
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(),
+                                 "OutputFile")
+        return S_OK()
+
 ######################################################################################################
 from DIRAC import gLogger
 
@@ -680,6 +780,16 @@ def get_app_list(app_dict):
             app1 = Simulase()
             app1.setVersion(version)
             app1.setOutputFile("default.p")
+            app_list.append(app1)
+            app3 = RegisterOutput()
+            app3.getInputFromApp(app1)
+            app_list.append(app3)
+        elif name.lower() == "lastip":
+            app0 = SetJobName()
+            app_list.append(app0)
+            app1 = Lastip()
+            app1.setVersion(version)
+            app1.setOutputFile("default.pkl")
             app_list.append(app1)
             app3 = RegisterOutput()
             app3.getInputFromApp(app1)
