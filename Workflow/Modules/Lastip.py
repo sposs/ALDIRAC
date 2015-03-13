@@ -77,8 +77,8 @@ class Lastip(ModuleBase):
 
         try:
             from crosslight_wrapper.server.main import Server
-        except ImportError:
-            self.log.error("Cannot import the wrapper")
+        except ImportError as error:
+            self.log.error("Cannot import the wrapper:", str(error))
             return S_ERROR("Cannot import crosslight wrapper")
         s = Server(host="localhost", local=True)
         session = s.get_new_session(lastip=True)
