@@ -652,13 +652,7 @@ class Simulase(Application):
 class Lastip(Application):
     def __init__(self, pdict=None):
         self.DesignXML = ""
-        self.MaterialXML = ""
-        self.Temperature = 300.
-        self.Field = None
-        self.Polarization = None
-        self.SheetDensity = None
-        self.Broadening = None
-        self.Modifiers = ""
+        self.SimulaseDB = ""
         self.RunParameters = ""
         super(Lastip, self).__init__(pdict)
         self._modulename = "Lastip"
