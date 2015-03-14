@@ -116,7 +116,7 @@ class Lastip(ModuleBase):
             self.setApplicationStatus("Lastip Done")
         except Exception as error:
             self.report_fail(str(error))
-            self.log.exception(lException=True, lExcInfo=True)
+            self.log.exception("Lastip exception")
             return S_ERROR(str(error))
         return S_OK()
 
