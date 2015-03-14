@@ -80,6 +80,15 @@ class Lastip(ModuleBase):
         except ImportError as error:
             self.log.error("Cannot import the wrapper:", str(error))
             return S_ERROR("Cannot import crosslight wrapper")
+        if not self.debug:
+            res = self.simudb.setStatus(self.taskname, "running")
+            if not res['OK']:
+                self.log.error("Failed to set status to running:", res["Message"])
+                res = self.simudb.setStatus(self.taskname, "running")
+                if not res['OK']:
+                    self.log.error("Failed again to set status to running:", res["Message"])
+                    self.log.error("Will fail the task")
+                    return S_ERROR("Issues with task state machine")
         s = Server(host="localhost", local=True)
         session = s.get_new_session(lastip=True)
         try:
@@ -107,7 +116,7 @@ class Lastip(ModuleBase):
             self.setApplicationStatus("Lastip Done")
         except Exception as error:
             self.report_fail(str(error))
-            self.log.error(str(error))
+            self.log.exception(lException=True, lExcInfo=True)
             return S_ERROR(str(error))
         return S_OK()
 
