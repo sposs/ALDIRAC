@@ -10,6 +10,7 @@ from DIRAC                                            import gMonitor
 from DIRAC.Core.Base.AgentModule                      import AgentModule
 from DIRAC.Core.Security.ProxyInfo                    import getProxyInfo
 from DIRAC.WorkloadManagementSystem.Client.WMSClient  import WMSClient
+import subprocess
 from ALDIRAC.Interfaces.API.UserJob                   import UserJob
 from ALDIRAC.Interfaces.API.Applications              import get_app_list
 from DIRAC.DataManagementSystem.Client.DataManager    import DataManager
@@ -113,6 +114,11 @@ class SubmitAgent(AgentModule):
                 if not res["OK"]:
                     self.log.error("Failed to upload default XML for the group \n   Won't submit anything!")
                     continue
+                if self.simudb.get_rungroup_type(simugroupid) == "lastip":
+                    res = self._handle_simulase_db(simugroupid)
+                    if not res["OK"]:
+                        self.log.error("Failed to upload simulase DB for the group \n   Won't submit anything!")
+                    continue
             sims = simusdict[simugroupid]["simulations"]
             if not sims:
                 self.log.info("RunGroup doesn't have any jobs to submit")
@@ -130,7 +136,7 @@ class SubmitAgent(AgentModule):
         input_xml_file = "./default.xml"
         with open(input_xml_file, "w") as xml_file:
             xml_file.write(tostring(input_xml))
-        self.simudb.close_session()#because the following can take time
+        self.simudb.close_session()  # because the following can take time
         basepath = "/alpeslasers/simu/"
         final_path = os.path.join(basepath, str(simugroupid), "default.xml")
         res = self.fc.getReplicas(final_path)
@@ -151,7 +157,38 @@ class SubmitAgent(AgentModule):
         os.unlink(input_xml_file)
         self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
         return S_OK()
-    
+
+    def _handle_simulase_db(self, simugroupid):
+        database_tag = self.simudb.get_lastip_group_dbtag(simugroupid)
+        design_id = self.simudb.get_rungroup_designID(simugroupid)
+        cmd = "simulase_wrapper_retrieve -v -D cldb --database_tag %s --design_id %s " \
+              "--output /tmp/lastip/large_db.txt" % (database_tag, design_id)
+        try:
+            subprocess.check_output(cmd.split())
+        except subprocess.CalledProcessError as error:
+            self.log.error("Bad simulase DB run:", str(error))
+            return S_ERROR(str(error))
+        basepath = "/alpeslasers/simu/"
+        final_path = os.path.join(basepath, str(simugroupid), "simulase_db.txt")
+        res = self.fc.getReplicas(final_path)
+        if res["OK"]:
+            if final_path in res['Value']['Successful']:
+                existing = self.simudb.get_lastip_simulase_lfn(simugroupid)
+                if final_path == existing:
+                    self.log.info("Found pre existing file for that group.")
+                    os.unlink("/tmp/lastip/large_db.txt")
+                    return S_OK()
+        dm = DataManager()
+        res = dm.putAndRegister(final_path, "/tmp/lastip/large_db.txt", self.storageElement)
+        if not res["OK"]:
+            if not res["Message"].count("This file GUID already exists for another file"):
+                self.log.error("Failed to upload default.xml to SE:", res["Message"])
+                return S_ERROR("Failed to upload default xml")
+        self.log.info("Uploaded following file:", final_path)
+        os.unlink("/tmp/lastip/large_db.txt")
+        self.simudb.set_lastip_simulase_lfn(simugroupid, final_path)
+        return S_OK()
+
     def _submit(self, simulations):
         """ Create and submit the tasks
         """
@@ -265,10 +302,9 @@ class SubmitAgent(AgentModule):
                     app.setDesignXML("LFN:"+path)
                     my_params = self.simudb.get_lastip_parameters(simid)
                     app.setRunParameters(my_params)
-                    simulase_db = self.simudb.get_lastip_simulase_db(simid)
+                    simulase_db = self.simudb.get_lastip_simulase_lfn(simgroupid)
                     if simulase_db:
-
-                        app.setSimulaseDB()
+                        app.setSimulaseDB("LFN:" + simulase_db)
                 if app.appname.lower() == "analysis":
                     if "store" in my_params and my_params['store']:
                         app.setStore() 
