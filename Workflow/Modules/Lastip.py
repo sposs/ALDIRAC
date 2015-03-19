@@ -117,6 +117,7 @@ class Lastip(ModuleBase):
         except Exception as error:
             self.report_fail(str(error))
             self.log.exception("Lastip exception")
+            self.log.info("Session directory contents:", s.list_session_directory(session))
             return S_ERROR(str(error))
         return S_OK()
 
