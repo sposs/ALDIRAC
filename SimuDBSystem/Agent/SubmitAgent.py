@@ -166,9 +166,10 @@ class SubmitAgent(AgentModule):
         cmd = "simulase_wrapper_retrieve -v -D cldb --database_tag %s --design_id %s " \
               "--output /tmp/lastip/large_db.txt" % (database_tag, design_id)
         try:
-            subprocess.check_output(cmd.split())
+            res = subprocess.check_output(cmd.split())
         except subprocess.CalledProcessError as error:
             self.log.error("Bad simulase DB run:", str(error))
+            self.log.error(res)
             return S_ERROR(str(error))
         basepath = "/alpeslasers/simu/"
         final_path = os.path.join(basepath, str(simugroupid), "simulase_db.txt")
