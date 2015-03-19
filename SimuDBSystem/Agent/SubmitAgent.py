@@ -118,7 +118,7 @@ class SubmitAgent(AgentModule):
                     res = self._handle_simulase_db(simugroupid)
                     if not res["OK"]:
                         self.log.error("Failed to upload simulase DB for the group \n   Won't submit anything!")
-                    continue
+                        continue
             sims = simusdict[simugroupid]["simulations"]
             if not sims:
                 self.log.info("RunGroup doesn't have any jobs to submit")
