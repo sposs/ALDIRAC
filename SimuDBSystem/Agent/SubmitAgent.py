@@ -160,6 +160,8 @@ class SubmitAgent(AgentModule):
 
     def _handle_simulase_db(self, simugroupid):
         database_tag = self.simudb.get_lastip_group_dbtag(simugroupid)
+        if not database_tag:
+            return S_OK()
         design_id = self.simudb.get_rungroup_designID(simugroupid)
         cmd = "simulase_wrapper_retrieve -v -D cldb --database_tag %s --design_id %s " \
               "--output /tmp/lastip/large_db.txt" % (database_tag, design_id)
