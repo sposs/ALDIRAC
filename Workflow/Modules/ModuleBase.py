@@ -59,7 +59,7 @@ class ModuleBase(object):
         self.ignoreapperrors = False
         self.inputdataMeta = {}
         #############
-        #Set from workflow object
+        # Set from workflow object
         self.workflow_commons = {}
         self.step_commons = {}
         self.workflowStatus = S_OK()
@@ -114,7 +114,7 @@ class ModuleBase(object):
                 del fileInfo[fileName]
 
         candidateFiles = fileInfo
-        #Sanity check all final candidate metadata keys are present (return S_ERROR if not)
+        # Sanity check all final candidate metadata keys are present (return S_ERROR if not)
         mandatoryKeys = ['type', 'workflowSE', 'lfn']  #filedict is used for requests
         for fileName, metadata in candidateFiles.items():
             for key in mandatoryKeys:
@@ -150,7 +150,7 @@ class ModuleBase(object):
         for pfn, guid in pfnGUID['Value'].items():
             candidateFiles[pfn]['GUID'] = guid
 
-        #Get all additional metadata about the file necessary for requests
+        # Get all additional metadata about the file necessary for requests
         final = {}
         for fileName, metadata in candidateFiles.items():
             fileDict = {'LFN': metadata['lfn'], 'Size': os.path.getsize(fileName), 'Addler': fileAdler(fileName),
@@ -248,7 +248,7 @@ class ModuleBase(object):
         self.jobType = self.workflow_commons.get('JobType', '')
 
         self.jobName = self.workflow_commons.get("JobName", "")
-        #         if self.workflow_commons.has_key('NbOfEvts'):
+        # if self.workflow_commons.has_key('NbOfEvts'):
         #             if self.workflow_commons['NbOfEvts'] > 0:
         #                 self.NumberOfEvents = self.workflow_commons['NbOfEvts']
         #
@@ -259,7 +259,7 @@ class ModuleBase(object):
         if 'InputFile' in self.step_commons:
             ### This must stay, otherwise, linking between steps is impossible: OutputFile is a string 
             inputf = self.step_commons['InputFile']
-            if not type(inputf) == types.ListType:
+            if not isinstance(inputf, list):
                 if len(inputf):
                     inputf = inputf.split(";")
                 else:
@@ -270,14 +270,14 @@ class ModuleBase(object):
 
         if 'InputData' in self.workflow_commons:
             inputdata = self.workflow_commons['InputData']
-            if not type(inputdata) == types.ListType:
+            if not isinstance(inputdata, list):
                 if len(inputdata):
                     self.InputData = inputdata.split(";")
                     self.InputData = [x.replace("LFN:", "") for x in self.InputData]
 
         if 'ParametricInputData' in self.workflow_commons:
             paramdata = self.workflow_commons['ParametricInputData']
-            if not type(paramdata) == types.ListType:
+            if not isinstance(paramdata, list):
                 if len(paramdata):
                     self.InputData = paramdata.split(";")
 
@@ -310,7 +310,7 @@ class ModuleBase(object):
             except OSError, e:
                 self.log.error("Failed to create the work directory :", str(e))
 
-        #now go there
+        # now go there
         os.chdir(workdir)
         self.log.verbose("We are now in ", workdir)
 
