@@ -35,6 +35,10 @@ class GenericApp(ModuleBase):
         return S_OK()
 
     def runIt(self):
+        """
+        Need to define a data_file_path properly...
+        :return:
+        """
         data_file_path = ""
         script_name = "generic_app.sh"
         with open(script_name, "w") as script:
