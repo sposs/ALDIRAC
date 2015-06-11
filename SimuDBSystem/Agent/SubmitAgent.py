@@ -62,16 +62,22 @@ class SubmitAgent(AgentModule):
         self.destination_sites["sewlab"] = Operations().getValue("SewLab/DestinationSite", ["AL.farm.ch"])
         self.destination_sites["simulase"] = Operations().getValue("Simulase/DestinationSite", ["AL.farm.ch"])
         self.destination_sites["lastip"] = Operations().getValue("Lastip/DestinationSite", ["AL.farm.ch"])
+        self.destination_sites["algorunner"] = Operations().getValue("AlgoRunner/DestinationSite", ["AL.farm.ch"])
+        self.destination_sites["generic"] = Operations().getValue("Generic/DestinationSite", ["AL.farm.ch"])
         self.log.info("Destination sites:", str(self.destination_sites))
         self.submit_pools = {}
         self.submit_pools["sewlab"] = Operations().getValue("SewLab/SubmitPools", "")
         self.submit_pools["simulase"] = Operations().getValue("Simulase/SubmitPools", "")
         self.submit_pools["lastip"] = Operations().getValue("Lastip/SubmitPools", "")
+        self.submit_pools["algorunner"] = Operations().getValue("AlgoRunner/SubmitPools", "")
+        self.submit_pools["generic"] = Operations().getValue("Generic/SubmitPools", "")
         self.log.info("SubmitPools", str(self.submit_pools))
         self.cpu_times = {}
         self.cpu_times["sewlab"] = Operations().getValue("SewLab/MaxCPUTime")
         self.cpu_times["simulase"] = Operations().getValue("Simulase/MaxCPUTime")
         self.cpu_times["lastip"] = Operations().getValue("Lastip/MaxCPUTime")
+        self.cpu_times["algorunner"] = Operations().getValue("AlgoRunner/MaxCPUTime")
+        self.cpu_times["generic"] = Operations().getValue("Generic/MaxCPUTime")
         self.log.info("MaxCPUTimes: ", str(self.cpu_times))
         self.verbosity = Operations().getValue("JobVerbosity", "INFO")
         self.storageElement = Operations().getValue("StorageElement", "AL-DIP")
@@ -97,8 +103,8 @@ class SubmitAgent(AgentModule):
         
         """
         try:
-            #TODO: make sure the simu groups that have no simulations are still returned so
-            #TODO: that they get their final status
+            # TODO: make sure the simu groups that have no simulations are still returned so
+            # TODO: that they get their final status
             simusdict = self.simudb.get_runs_with_status_in_group_with_status(status=["new"], gstat=["new",
                                                                                                      "submitting"])
             ## session is opened
@@ -311,7 +317,12 @@ class SubmitAgent(AgentModule):
                         app.setSimulaseDB("LFN:" + simulase_db)
                 if app.appname.lower() == "analysis":
                     if "store" in my_params and my_params['store']:
-                        app.setStore() 
+                        app.setStore()
+                if app.appname.lower() == "any":
+                    jobtype = "generic"
+                    my_params = self.simudb.get_generic_app_params(simid)
+                    app.appname = my_params["ProjectName"]
+                    app.setParameters(my_params)
                 res = job.append(app)
                 if not res['OK']:
                     self.log.error("Error adding task:", res['Message'])
@@ -319,7 +330,7 @@ class SubmitAgent(AgentModule):
             if failed:
                 return S_ERROR("Failed adding the applications")
         if self.store_output and is_sewlab:
-            job.setOutputData(["*.pkl"], "%s" % (simgroupid), self.storageElement)
+            job.setOutputData(["*.pkl"], "%s" % simgroupid, self.storageElement)
         job.setPriority(max_prio)
         job.setDestination(self.destination_sites[jobtype])
         #if self.submit_pools[jobtype]:

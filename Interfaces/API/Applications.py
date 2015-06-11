@@ -741,6 +741,144 @@ class Lastip(Application):
                                  "OutputFile")
         return S_OK()
 
+
+class AlgoRunner(Application):
+    def __init__(self, pdict=None):
+        self.AlgoName = ""
+        self.Package = ""
+        self.AlgoConfig = ""
+        super(AlgoRunner, self).__init__(pdict)
+        self._modulename = "AlgoRunner"
+        self._moduledescription = 'Run AlgoRunner algorithm'
+
+    def setAlgoName(self, algoname):
+        self.AlgoName = algoname
+
+    def setPackage(self, package):
+        self.appname = package
+        self.Package = package
+
+    def setAlgoConfig(self, config):
+        if os.path.exists(config) or config.count("LFN:"):
+            self.inputSB.append(config)
+        else:
+            self._log.warn("Configuration file not found locally")
+
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("algo_name", "", "string", "", "", False, False, "Name of the algorithm to use"))
+        m1.addParameter(Parameter("algo_cfg", "", "string", "", "", False, False,
+                                  "Configuration file of the algorithm"))
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
+        return m1
+
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("debug", self.Debug)
+        moduleinstance.setValue("algo_name", self.AlgoName)
+        if self.AlgoConfig:
+            moduleinstance.setValue("algo_cfg", self.AlgoConfig)
+
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks
+        """
+        if not self.Version:
+            return S_ERROR("Version of the algorithm is needed")
+
+        if not self.AlgoName:
+            return S_ERROR("Algorithm name required")
+
+        if not self.Package:
+            return S_ERROR("Package MUST be defined")
+
+        if not self.SteeringFile:
+            return S_ERROR("Algorithm specification not set. Use setSteeringFile()")
+
+    def _checkWorkflowConsistency(self):
+        return self._checkRequiredApp()
+
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if isinstance(self._linkedidx, int):
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(),
+                                 "OutputFile")
+        return S_OK()
+
+
+class GenericApp(Application):
+    def __init__(self, pdict=None):
+        self.Parameters = {}
+        super(GenericApp, self).__init__(pdict)
+        self._modulename = "GenericApp"
+        self.appname = "Any"
+        self._moduledescription = 'Run a generic app with parameters'
+
+    def setParameters(self, param_dict):
+        self.Parameters = param_dict
+
+    def _userjobmodules(self, stepdefinition):
+        res1 = self._setApplicationModuleAndParameters(stepdefinition)
+        res2 = self._setUserJobFinalization(stepdefinition)
+        if not res1["OK"] or not res2["OK"]:
+            return S_ERROR('userjobmodules failed')
+        return S_OK()
+
+    def _applicationModule(self):
+        m1 = self._createModuleDefinition()
+        m1.addParameter(Parameter("parameters_dict", {}, "dict", "", "", False, False, "A parameter dict"))
+        m1.addParameter(Parameter("debug", False, "bool", "", "", False,
+                                  False, "debug mode"))
+        return m1
+
+    def _applicationModuleValues(self, moduleinstance):
+        moduleinstance.setValue("debug", self.Debug)
+        moduleinstance.setValue("parameters_dict", self.Parameters)
+
+    def _addParametersToStep(self, stepdefinition):
+        res = self._addBaseParameters(stepdefinition)
+        if not res["OK"]:
+            return S_ERROR("Failed to set base parameters")
+        return S_OK()
+
+    def _setStepParametersValues(self, instance):
+        """ Nothing to do here
+        """
+        self._setBaseStepParametersValues(instance)
+        return S_OK()
+
+    def _checkConsistency(self):
+        """ Checks
+        """
+        return S_OK()
+
+    def _resolveLinkedStepParameters(self, stepinstance):
+        if isinstance(self._linkedidx, int):
+            self._inputappstep = self._jobsteps[self._linkedidx]
+        if self._inputappstep:
+            stepinstance.setLink("InputFile", self._inputappstep.getType(),
+                                 "OutputFile")
+        return S_OK()
+
 ######################################################################################################
 from DIRAC import gLogger
 
@@ -751,9 +889,9 @@ def get_app_list(app_dict):
     """
     app_list = []
     for name, version in app_dict.items():
+        app0 = SetJobName()
+        app_list.append(app0)
         if name.lower() == "sewlab":
-            app0 = SetJobName()
-            app_list.append(app0)
             app1 = Sewlab()
             app1.setVersion(version)
             app1.setOutputFile("default.slo")
@@ -769,8 +907,6 @@ def get_app_list(app_dict):
             app3.getInputFromApp(app2)
             app_list.append(app3)
         elif name.lower() == "simulase":
-            app0 = SetJobName()
-            app_list.append(app0)
             app1 = Simulase()
             app1.setVersion(version)
             app1.setOutputFile("default.p")
@@ -779,11 +915,24 @@ def get_app_list(app_dict):
             app3.getInputFromApp(app1)
             app_list.append(app3)
         elif name.lower() == "lastip":
-            app0 = SetJobName()
-            app_list.append(app0)
             app1 = Lastip()
             app1.setVersion(version)
             app1.setOutputFile("default.pkl")
+            app_list.append(app1)
+            app3 = RegisterOutput()
+            app3.getInputFromApp(app1)
+            app_list.append(app3)
+        elif name.lower() == "algorunner":
+            app1 = AlgoRunner()
+            app1.setOutputFile("runner.json")
+            app_list.append(app1)
+            app2 = RegisterOutput()
+            app2.getInputFromApp(app1)
+            app_list.append(app2)
+        elif name.lower() == "any":
+            app1 = GenericApp()
+            app1.setVersion(version)
+            app1.setOutputFile("output.pkl")
             app_list.append(app1)
             app3 = RegisterOutput()
             app3.getInputFromApp(app1)
