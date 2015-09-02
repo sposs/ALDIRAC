@@ -828,6 +828,7 @@ class AlgoRunner(Application):
 class GenericApp(Application):
     def __init__(self, pdict=None):
         self.Parameters = {}
+        self.ExecutionModule = ""
         super(GenericApp, self).__init__(pdict)
         self._modulename = "GenericApp"
         self.appname = "Any"
@@ -835,6 +836,11 @@ class GenericApp(Application):
 
     def setParameters(self, param_dict):
         self.Parameters = param_dict
+
+    def setExecutionModule(self, module):
+        if os.path.exists(module) or module.count("LFN:"):
+            self.inputSB.append(module)
+        self.ExecutionModule = module
 
     def _userjobmodules(self, stepdefinition):
         res1 = self._setApplicationModuleAndParameters(stepdefinition)
@@ -846,6 +852,7 @@ class GenericApp(Application):
     def _applicationModule(self):
         m1 = self._createModuleDefinition()
         m1.addParameter(Parameter("parameters_dict", {}, "dict", "", "", False, False, "A parameter dict"))
+        m1.addParameter(Parameter("execution_module", "", "string", "", "", False, False, "module name to load to run"))
         m1.addParameter(Parameter("debug", False, "bool", "", "", False,
                                   False, "debug mode"))
         return m1
@@ -853,6 +860,7 @@ class GenericApp(Application):
     def _applicationModuleValues(self, moduleinstance):
         moduleinstance.setValue("debug", self.Debug)
         moduleinstance.setValue("parameters_dict", self.Parameters)
+        moduleinstance.setValue("execution_module", self.ExecutionModule)
 
     def _addParametersToStep(self, stepdefinition):
         res = self._addBaseParameters(stepdefinition)
@@ -869,6 +877,7 @@ class GenericApp(Application):
     def _checkConsistency(self):
         """ Checks
         """
+
         return S_OK()
 
     def _resolveLinkedStepParameters(self, stepinstance):

@@ -321,8 +321,9 @@ class SubmitAgent(AgentModule):
                 if app.appname.lower() == "any":
                     jobtype = "generic"
                     my_params = self.simudb.get_generic_app_params(simid)
-                    app.appname = my_params["ProjectName"]
+                    app.appname = my_params["ApplicationName"]
                     app.setParameters(my_params)
+                    app.setExecutionModule(my_params["ExecutionModulePath"])
                 res = job.append(app)
                 if not res['OK']:
                     self.log.error("Error adding task:", res['Message'])
