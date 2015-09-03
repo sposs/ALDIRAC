@@ -125,6 +125,11 @@ class SubmitAgent(AgentModule):
                     if not res["OK"]:
                         self.log.error("Failed to upload simulase DB for the group \n   Won't submit anything!")
                         continue
+                if self.simudb.get_rungroup_type(simugroupid) == "generic":
+                    res = self._handle_generic_inputs(simugroupid)
+                    if not res["OK"]:
+                        self.log.error("Failed to upload simulase DB for the group \n   Won't submit anything!")
+                        continue
             sims = simusdict[simugroupid]["simulations"]
             if not sims:
                 self.log.info("RunGroup doesn't have any jobs to submit")
@@ -134,45 +139,100 @@ class SubmitAgent(AgentModule):
             total_tasks += len(sims)
         self.log.info("Found tasks to submit:", total_tasks)
         return S_OK(simus_ids)
-    
+
+    def put_file(self, simugroupid, file_lfn, data_file, fcn_handle):
+        """
+        Small local utility to upload files to a SE
+        :param simugroupid: a simu group ID
+        :param file_lfn: a file LFN
+        :param data_file: a data file path to upload
+        :param fcn_handle: A function handle to get the uploaded file
+        :return: S_OK
+        """
+        res = self.fc.getReplicas(file_lfn)
+        if res["OK"]:
+            if file_lfn in res['Value']['Successful']:
+                existing = fcn_handle(simugroupid)
+                if file_lfn == existing:
+                    self.log.info("Found pre existing file for that group.")
+                    return S_OK()
+        dm = DataManager()
+        res = dm.putAndRegister(file_lfn, data_file, self.storageElement)
+        if not res["OK"]:
+            if not res["Message"].count("This file GUID already exists for another file"):
+                self.log.error("Failed to upload default.xml to SE:", res["Message"])
+                return S_ERROR("Failed to upload default xml")
+        self.log.info("Uploaded following file:", file_lfn)
+        return S_OK()
+
+    def _handle_generic_inputs(self, simugroupid):
+        """
+        Put the generic app files on the SE
+        :param simugroupid:
+        :return: S_OK
+        """
+        input_data = self.simudb.get_generic_app_input_data(simugroupid)
+        fname = os.path.basename(input_data.get("name", "data.dat"))
+        with open(fname, "w") as input_f:
+            input_f.write(input_data["content"])
+        self.simudb.close_session()  # because the following can take time
+        basepath = "/alpeslasers/simu/"
+        final_path = os.path.join(basepath, str(simugroupid), fname)
+        res = self.put_file(simugroupid, final_path, fname, self.simudb.get_rungroup_lfnpath)
+        os.unlink(fname)
+        if not res['OK']:
+            self.log.error(res['Message'])
+            return res
+        self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
+        execscript = self.simudb.get_generic_app_execfile(simugroupid)
+        fname = os.path.basename(execscript.get("name", "execf"))
+        with open(fname, "w") as input_f:
+            input_f.write(execscript["content"])
+        final_path = os.path.join(basepath, str(simugroupid), fname)
+        res = self.put_file(simugroupid, final_path, fname, self.simudb.get_generic_app_execfile_lfn)
+        os.unlink(fname)
+        if not res['OK']:
+            self.log.error(res['Message'])
+            return res
+        self.simudb.set_generic_app_execfile_lfn(simugroupid, final_path)
+        return S_OK()
+
     def _handle_defaultXML(self, simugroupid):
-        """ Upload the default XML for this group
+        """ Upload the default XML for this group. Usually the design XML, but can be other things like the input
+        data for the generic app
         """
         input_xml = self.combined.get_rungroup_fullxml(simugroupid)
+        if not input_xml:
+            return S_OK()
         input_xml_file = "./default.xml"
         with open(input_xml_file, "w") as xml_file:
             xml_file.write(tostring(input_xml))
         self.simudb.close_session()  # because the following can take time
         basepath = "/alpeslasers/simu/"
         final_path = os.path.join(basepath, str(simugroupid), "default.xml")
-        res = self.fc.getReplicas(final_path)
-        if res["OK"]:
-            if final_path in res['Value']['Successful']:
-                existing = self.simudb.get_rungroup_lfnpath(simugroupid)
-                if final_path == existing:
-                    self.log.info("Found pre existing file for that group.")
-                    os.unlink(input_xml_file)
-                    return S_OK()
-        dm = DataManager()
-        res = dm.putAndRegister(final_path, input_xml_file, self.storageElement)
-        if not res["OK"]:
-            if not res["Message"].count("This file GUID already exists for another file"):
-                self.log.error("Failed to upload default.xml to SE:", res["Message"])
-                return S_ERROR("Failed to upload default xml")
-        self.log.info("Uploaded following file:", final_path)
+        res = self.put_file(simugroupid, final_path, input_xml_file, self.simudb.get_rungroup_lfnpath)
         os.unlink(input_xml_file)
+        if not res['OK']:
+            self.log.error(res['Message'])
+            return res
         self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
         return S_OK()
 
     def _handle_simulase_db(self, simugroupid):
+        """
+        For lastip runs, the simulase DB need to be obtained then shipped to the ISB
+        :param simugroupid: a simu group ID
+        :return: S_OK
+        """
         database_tag = self.simudb.get_lastip_group_dbtag(simugroupid)
         if not database_tag:
             return S_OK()
         if not os.path.isdir("/tmp/lastip"):
             os.mkdir("/tmp/lastip")
+        dest_file = '/tmp/lastip/large_db.txt'
         design_id = self.simudb.get_rungroup_designID(simugroupid)
         cmd = "simulase_wrapper_retrieve -v -D cldb --database_tag %s --design_id %s " \
-              "--output /tmp/lastip/large_db.txt" % (database_tag, design_id)
+              "--output %s" % (database_tag, design_id, dest_file)
         try:
             res = subprocess.check_output(cmd.split(), stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as error:
@@ -180,22 +240,11 @@ class SubmitAgent(AgentModule):
             return S_ERROR(str(error))
         basepath = "/alpeslasers/simu/"
         final_path = os.path.join(basepath, str(simugroupid), "simulase_db.txt")
-        res = self.fc.getReplicas(final_path)
-        if res["OK"]:
-            if final_path in res['Value']['Successful']:
-                existing = self.simudb.get_lastip_simulase_lfn(simugroupid)
-                if final_path == existing:
-                    self.log.info("Found pre existing file for that group.")
-                    os.unlink("/tmp/lastip/large_db.txt")
-                    return S_OK()
-        dm = DataManager()
-        res = dm.putAndRegister(final_path, "/tmp/lastip/large_db.txt", self.storageElement)
-        if not res["OK"]:
-            if not res["Message"].count("This file GUID already exists for another file"):
-                self.log.error("Failed to upload default.xml to SE:", res["Message"])
-                return S_ERROR("Failed to upload default xml")
-        self.log.info("Uploaded following file:", final_path)
-        os.unlink("/tmp/lastip/large_db.txt")
+        res = self.put_file(simugroupid, final_path, dest_file, self.simudb.get_lastip_simulase_lfn)
+        os.unlink(dest_file)
+        if not res['OK']:
+            self.log.error(res['Message'])
+            return res
         self.simudb.set_lastip_simulase_lfn(simugroupid, final_path)
         return S_OK()
 
@@ -263,7 +312,7 @@ class SubmitAgent(AgentModule):
             #group_name = "%s_%s" % (str(resdict["simname"]), str(simgroupid))
             #self.log.notice("Submitting task for group", group_name)
             #job.setJobGroup(group_name)
-            path = resdict["lfnpath"]
+            path = resdict.get("lfnpath", "")
             path = path.strip()
             if resdict["priority"] > max_prio:
                 #select the highest priority as the job's priority
@@ -286,6 +335,7 @@ class SubmitAgent(AgentModule):
                     if not path:
                         self.log.error("LFN Path is empty, not submitting")
                         failed = True
+                        continue
                     app.setSteeringFile("LFN:"+path)
                     my_params = self.simudb.get_sewlabrun_parameters(simid)
                     app.setAlteredParameters("%s = %s" % (my_params['name'], my_params['value']))
@@ -295,6 +345,7 @@ class SubmitAgent(AgentModule):
                     if not path:
                         self.log.error("LFN Path is empty, not submitting")
                         failed = True
+                        continue
                     app.setDesignXML("LFN:"+path)
                     my_params = self.simudb.get_simulase_parameters(simid)
                     app.setModifiers(my_params['modifiers'])
@@ -309,7 +360,8 @@ class SubmitAgent(AgentModule):
                     if not path:
                         self.log.error("LFN Path is empty, not submitting")
                         failed = True
-                    app.setDesignXML("LFN:"+path)
+                        continue
+                    app.setDesignXML("LFN:" + path)
                     my_params = self.simudb.get_lastip_parameters(simid)
                     app.setRunParameters(my_params)
                     simulase_db = self.simudb.get_lastip_simulase_lfn(simgroupid)
@@ -322,8 +374,14 @@ class SubmitAgent(AgentModule):
                     jobtype = "generic"
                     my_params = self.simudb.get_generic_app_params(simid)
                     app.appname = my_params["ApplicationName"]
+                    if path:
+                        app.setInputFile("LFN:" + path)
+                    my_params['InputFile'] = path
                     app.setParameters(my_params)
-                    app.setExecutionModule(my_params["ExecutionModulePath"])
+                    exec_module = my_params.get("ExecutionModulePath", "")
+                    if exec_module:
+                        exec_module = "LFN:"+exec_module
+                        app.setExecutionModule(exec_module)
                 res = job.append(app)
                 if not res['OK']:
                     self.log.error("Error adding task:", res['Message'])

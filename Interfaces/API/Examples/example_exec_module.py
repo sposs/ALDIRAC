@@ -15,7 +15,11 @@ if __name__ == "__main__":
     args = sys.argv
     bin_path = args[1]
     parameters = args[2]
+    inputdata = None
+    if len(args) > 2:
+        inputdata = args[3]
+
     with open(parameters, "r") as p_file:
         p_dict = json.loads(p_file.read())
 
-    print "Would execute a binary in %s using %s as input" % (bin_path, p_dict)
+    print "Would execute a binary in %s using %s as input processing this file %s" % (bin_path, p_dict, inputdata)

@@ -85,7 +85,11 @@ class GenericApp(ModuleBase):
         with open(script_name, "w") as script:
             script.write("#!/bin/bash\n")
             script.write("unset LD_LIBRARY_PATH\n")
-            script.write("%s %s %s\n" % (self.execution_module, executable_path, param_path))
+            exec_str = "%s %s %s" % (self.execution_module, executable_path, param_path)
+            if self.InputFile:
+                exec_str += " %s" % os.path.basename(self.InputFile)
+            exec_str += "\n"
+            script.write(exec_str)
             script.write("exit $?\n")
         os.chmod(script_name, 0755)
         cmd = 'sh -c "%s"' % script_name
