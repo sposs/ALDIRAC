@@ -174,11 +174,13 @@ class SubmitAgent(AgentModule):
         """
         input_data = self.simudb.get_generic_app_input_data(simugroupid)
         fname = os.path.join("/tmp", os.path.basename(input_data.get("name", "data.dat")))
+        self.log.info("File Name is %s " % fname)
         with open(fname, "w") as input_f:
             input_f.write(input_data["content"])
         self.simudb.close_session()  # because the following can take time
         basepath = "/alpeslasers/simu/"
         final_path = os.path.join(basepath, str(simugroupid), fname)
+        self.log.info("Dest LFN is %s" % final_path)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_rungroup_lfnpath)
         os.unlink(fname)
         if not res['OK']:
@@ -187,9 +189,11 @@ class SubmitAgent(AgentModule):
         self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
         execscript = self.simudb.get_generic_app_execfile(simugroupid)
         fname = os.path.join("/tmp", os.path.basename(execscript.get("name", "execf")))
+        self.log.info("File Name is %s " % fname)
         with open(fname, "w") as input_f:
             input_f.write(execscript["content"])
         final_path = os.path.join(basepath, str(simugroupid), fname)
+        self.log.info("Dest LFN is %s" % final_path)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_generic_app_execfile_lfn)
         os.unlink(fname)
         if not res['OK']:
