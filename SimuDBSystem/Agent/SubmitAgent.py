@@ -172,7 +172,7 @@ class SubmitAgent(AgentModule):
         :return: S_OK
         """
         input_data = self.simudb.get_generic_app_input_data(simugroupid)
-        fname = os.path.basename(input_data.get("name", "data.dat"))
+        fname = os.path.join("/tmp", os.path.basename(input_data.get("name", "data.dat")))
         with open(fname, "w") as input_f:
             input_f.write(input_data["content"])
         self.simudb.close_session()  # because the following can take time
@@ -185,7 +185,7 @@ class SubmitAgent(AgentModule):
             return res
         self.simudb.set_rungroup_lfnpath(simugroupid, final_path)
         execscript = self.simudb.get_generic_app_execfile(simugroupid)
-        fname = os.path.basename(execscript.get("name", "execf"))
+        fname = os.path.join("/tmp", os.path.basename(execscript.get("name", "execf")))
         with open(fname, "w") as input_f:
             input_f.write(execscript["content"])
         final_path = os.path.join(basepath, str(simugroupid), fname)
