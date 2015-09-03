@@ -385,6 +385,7 @@ class SubmitAgent(AgentModule):
                         app.setInputFile("LFN:" + path)
                     my_params['InputFile'] = path
                     app.setParameters(my_params)
+                    app.setOutputFile(my_params.get("OutputFile", "output.pkl"))
                     exec_module = my_params.get("ExecutionModulePath", "")
                     if exec_module:
                         exec_module = "LFN:"+exec_module

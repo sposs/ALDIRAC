@@ -941,7 +941,6 @@ def get_app_list(app_dict):
         elif name.lower() == "generic":
             app1 = GenericApp()
             app1.setVersion(version)
-            app1.setOutputFile("output.pkl")
             app_list.append(app1)
             app3 = RegisterOutput()
             app3.getInputFromApp(app1)
