@@ -64,9 +64,10 @@ class GenericApp(ModuleBase):
     def applicationSpecificMoveBefore(self):
         if self.execution_module:
             exec_module = os.path.basename(self.execution_module)
+            self.log.info("Will copy %s to execution dir" % exec_module)
             if os.path.exists(os.path.join(self.basedirectory, exec_module)):
-                shutil.copy(os.path.join(self.basedirectory, exec_module), exec_module)
-                self.execution_module = exec_module
+                shutil.copy(os.path.join(self.basedirectory, exec_module), "./"+exec_module)
+                self.execution_module = "./"+exec_module
                 os.chmod(self.execution_module, 0755)  # make it executable
 
     def runIt(self):
