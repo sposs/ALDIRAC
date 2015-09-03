@@ -373,7 +373,7 @@ class SubmitAgent(AgentModule):
                 if app.appname.lower() == "any":
                     jobtype = "generic"
                     my_params = self.simudb.get_generic_app_params(simid)
-                    app.appname = my_params["ApplicationName"]
+                    app.appname = my_params.get("ApplicationName", "generic")
                     if path:
                         app.setInputFile("LFN:" + path)
                     my_params['InputFile'] = path
