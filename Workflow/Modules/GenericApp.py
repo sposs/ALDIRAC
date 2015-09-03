@@ -87,7 +87,7 @@ class GenericApp(ModuleBase):
             script.write("unset LD_LIBRARY_PATH\n")
             exec_str = "%s %s %s" % (self.execution_module, executable_path, param_path)
             if self.InputFile:
-                exec_str += " %s" % os.path.basename(self.InputFile)
+                exec_str += " %s" % os.path.basename(self.InputFile[0])
             exec_str += "\n"
             script.write(exec_str)
             script.write("exit $?\n")
