@@ -149,6 +149,7 @@ class SubmitAgent(AgentModule):
         :param fcn_handle: A function handle to get the uploaded file
         :return: S_OK
         """
+        self.log.info("Will attempt to upload %s to %s" % (data_file, file_lfn))
         res = self.fc.getReplicas(file_lfn)
         if res["OK"]:
             if file_lfn in res['Value']['Successful']:
