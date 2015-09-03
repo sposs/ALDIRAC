@@ -128,7 +128,7 @@ class SubmitAgent(AgentModule):
                 if self.simudb.get_rungroup_type(simugroupid) == "generic":
                     res = self._handle_generic_inputs(simugroupid)
                     if not res["OK"]:
-                        self.log.error("Failed to upload simulase DB for the group \n   Won't submit anything!")
+                        self.log.error("Failed to upload generic app inputs for the group \n   Won't submit anything!")
                         continue
             sims = simusdict[simugroupid]["simulations"]
             if not sims:
@@ -161,7 +161,7 @@ class SubmitAgent(AgentModule):
         if not res["OK"]:
             if not res["Message"].count("This file GUID already exists for another file"):
                 self.log.error("Failed to upload file to SE:", res["Message"])
-                return S_ERROR("Failed to upload default xml")
+                return S_ERROR("Failed to upload file")
         self.log.info("Uploaded following file:", file_lfn)
         return S_OK()
 
