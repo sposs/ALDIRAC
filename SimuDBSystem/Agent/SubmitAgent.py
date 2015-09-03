@@ -179,7 +179,7 @@ class SubmitAgent(AgentModule):
             input_f.write(input_data["content"])
         self.simudb.close_session()  # because the following can take time
         basepath = "/alpeslasers/simu/"
-        final_path = os.path.join(basepath, str(simugroupid), fname)
+        final_path = os.path.join(basepath, str(simugroupid), os.path.basename(fname))
         self.log.info("Dest LFN is %s" % final_path)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_rungroup_lfnpath)
         os.unlink(fname)
@@ -192,7 +192,7 @@ class SubmitAgent(AgentModule):
         self.log.info("File Name is %s " % fname)
         with open(fname, "w") as input_f:
             input_f.write(execscript["content"])
-        final_path = os.path.join(basepath, str(simugroupid), fname)
+        final_path = os.path.join(basepath, str(simugroupid), os.path.basename(fname))
         self.log.info("Dest LFN is %s" % final_path)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_generic_app_execfile_lfn)
         os.unlink(fname)
