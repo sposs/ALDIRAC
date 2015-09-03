@@ -179,7 +179,7 @@ class SubmitAgent(AgentModule):
         basepath = "/alpeslasers/simu/"
         final_path = os.path.join(basepath, str(simugroupid), fname)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_rungroup_lfnpath)
-        #os.unlink(fname)
+        os.unlink(fname)
         if not res['OK']:
             self.log.error(res['Message'])
             return res
@@ -190,7 +190,7 @@ class SubmitAgent(AgentModule):
             input_f.write(execscript["content"])
         final_path = os.path.join(basepath, str(simugroupid), fname)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_generic_app_execfile_lfn)
-        #os.unlink(fname)
+        os.unlink(fname)
         if not res['OK']:
             self.log.error(res['Message'])
             return res
