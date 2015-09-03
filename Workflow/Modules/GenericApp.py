@@ -49,9 +49,9 @@ class GenericApp(ModuleBase):
         self.execution_module = ""
 
     def applicationSpecificInputs(self):
-        if "ApplicationName" not in self.parameters_dict:
-            return S_ERROR("Application name was not defined properly")
-        self._executable = self.parameters_dict.get("ApplicationName")
+        if "Executable" not in self.parameters_dict:
+            return S_ERROR("Executable name was not defined properly")
+        self._executable = self.parameters_dict.get("Executable")
         if not self.taskname:
             self.taskname = self.workflow_commons.get("TaskName", self.jobName)
         if "OutputFile" not in self.parameters_dict:
