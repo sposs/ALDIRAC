@@ -11,7 +11,7 @@ import os
 from ALDIRAC.SimuDBSystem.Client.SimuDBClient import SimuDBClient
 import json
 import shutil
-from ConfigurationSystem.Client.Helpers.Operations import Operations
+from DIRAC.ConfigurationSystem.Client.Helpers.Operations import Operations
 from DIRAC.Core.Utilities.Os import which
 
 __author__ = 'stephanep'
