@@ -1,3 +1,7 @@
+[v1r5p2]
+
+Allow installing any Application and set the Executable that should be looked for
+
 [v1r5p1]
 
 Fix import path
