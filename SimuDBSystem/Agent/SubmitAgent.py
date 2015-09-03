@@ -160,7 +160,7 @@ class SubmitAgent(AgentModule):
         res = dm.putAndRegister(file_lfn, data_file, self.storageElement)
         if not res["OK"]:
             if not res["Message"].count("This file GUID already exists for another file"):
-                self.log.error("Failed to upload default.xml to SE:", res["Message"])
+                self.log.error("Failed to upload file to SE:", res["Message"])
                 return S_ERROR("Failed to upload default xml")
         self.log.info("Uploaded following file:", file_lfn)
         return S_OK()
@@ -179,7 +179,7 @@ class SubmitAgent(AgentModule):
         basepath = "/alpeslasers/simu/"
         final_path = os.path.join(basepath, str(simugroupid), fname)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_rungroup_lfnpath)
-        os.unlink(fname)
+        #os.unlink(fname)
         if not res['OK']:
             self.log.error(res['Message'])
             return res
@@ -190,7 +190,7 @@ class SubmitAgent(AgentModule):
             input_f.write(execscript["content"])
         final_path = os.path.join(basepath, str(simugroupid), fname)
         res = self.put_file(simugroupid, final_path, fname, self.simudb.get_generic_app_execfile_lfn)
-        os.unlink(fname)
+        #os.unlink(fname)
         if not res['OK']:
             self.log.error(res['Message'])
             return res
