@@ -92,7 +92,7 @@ class GenericApp(ModuleBase):
             script.write(exec_str)
             script.write("exit $?\n")
         os.chmod(script_name, 0755)
-        cmd = 'sh -c "%s"' % script_name
+        cmd = 'sh -c "./%s"' % script_name
         self.log.info("Running %s" % cmd)
         self.setApplicationStatus("Running")
         if not self.debug:
