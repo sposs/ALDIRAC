@@ -947,7 +947,7 @@ def get_app_list(app_dict):
             app3.getInputFromApp(app1)
             app_list.append(app3)
         else:
-            gLogger.error("Invalid application name")
+            gLogger.error("Invalid application name %s" % name)
             return S_ERROR("Bad application name")
 
     return S_OK(app_list)
