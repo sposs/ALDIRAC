@@ -373,6 +373,7 @@ class SubmitAgent(AgentModule):
                 if app.appname.lower() == "any":
                     jobtype = "generic"
                     my_params = self.simudb.get_generic_app_params(simid)
+                    self.log.info("Using %s as parameters" % my_params)
                     app.appname = my_params.get("ApplicationName", "generic")
                     app.setVersion(my_params.get("ApplicationVersion", "1.0"))
                     if path:
