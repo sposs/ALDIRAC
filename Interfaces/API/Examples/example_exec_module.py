@@ -7,6 +7,8 @@ Copyright 2015 Alpes Lasers SA, Neuchatel, Switzerland
 """
 import json
 import sys
+import pickle
+
 
 __author__ = 'stephanep'
 __copyright__ = "Copyright 2015, Alpes Lasers SA"
@@ -23,3 +25,8 @@ if __name__ == "__main__":
         p_dict = json.loads(p_file.read())
 
     print "Would execute a binary in %s using %s as input processing this file %s" % (bin_path, p_dict, inputdata)
+    outputfile = p_dict.get(u"OutputFile", "output.pkl")
+    print "producing dummy data file for output: %s" % outputfile
+    with open(outputfile, "w") as outf:
+        d = {"key": 23}
+        pickle.dump(d, outf)
