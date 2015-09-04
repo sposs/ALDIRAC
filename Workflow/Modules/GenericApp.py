@@ -24,7 +24,6 @@ def find_path_to_app(app):
     :param app: name of application
     :return: path to binary
     """
-    path = ""
     test_path = Operations().getValue("Applications/%s/Path" % app, "")
     if test_path:
         return test_path
@@ -35,7 +34,8 @@ def find_path_to_app(app):
     if path:
         path = os.path.dirname(path)
         return path
-    return None
+    gLogger.info("Executable not found anywhere, returning local directory")
+    return os.getcwd()
 
 
 class GenericApp(ModuleBase):
