@@ -29,5 +29,5 @@ class SetJobName(ModuleBase):
         self.resolveInputVariables()
         self.log.info("Setting new job name to", self.jobname)
         self.workflow_commons['TaskName'] = self.jobname
-        
+        self.workflowStatus = S_OK()
         return S_OK()
