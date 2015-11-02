@@ -1,3 +1,7 @@
+[v1r5p7]
+
+Reset workflowStatus during setJobName
+
 [v1r5p6]
 
 Attempt to fix execfile handling
