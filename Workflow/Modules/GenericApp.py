@@ -49,6 +49,10 @@ class GenericApp(ModuleBase):
         self.execution_module = ""
 
     def applicationSpecificInputs(self):
+        """
+        Check that the required parameters are properly defined
+        :return: S_OK or S_ERROR
+        """
         if "Executable" not in self.parameters_dict:
             return S_ERROR("Executable name was not defined properly")
         self._executable = self.parameters_dict.get("Executable")
@@ -62,6 +66,10 @@ class GenericApp(ModuleBase):
         return S_OK()
 
     def applicationSpecificMoveBefore(self):
+        """
+        Move from the parent directory the needed items that are not standard
+        :return: None
+        """
         if self.execution_module:
             exec_module = os.path.basename(self.execution_module)
             self.log.info("Will copy %s to execution dir" % exec_module)
@@ -72,8 +80,8 @@ class GenericApp(ModuleBase):
 
     def runIt(self):
         """
-        Need to define a data_file_path properly... Need to find executable location properly too
-        :return:
+        Run the thing now
+        :return: S_OK or S_ERROR
         """
         with open("parameters.json", "w") as param_files:
             param_files.write(json.dumps(self.parameters_dict))
@@ -124,6 +132,11 @@ class GenericApp(ModuleBase):
         return S_OK()
 
     def report_fail(self, state):
+        """
+        Send a 'failed' status update to simudb
+        :param state: the state reason
+        :return: None
+        """
         if not self.debug:
             res = self.simudb.setStatus(self.taskname, "failed", "Error while executing: %s" % state)
             if not res["OK"]:

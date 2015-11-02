@@ -1,3 +1,7 @@
+"""
+This service is used to start a VM on AWS. this VM is a complete DIRAC server.
+"""
+
 import types
 import boto
 import time
