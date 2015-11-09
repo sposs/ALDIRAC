@@ -64,7 +64,7 @@ def fetch():
     with open("tmp.sh", "w") as script:
         script.write("""#!/bin/bash
 unset LD_LIBRARY_PATH
-git fetch
+git fetch --tags
 exit $?
 """)
     os.chmod("tmp.sh", 0755)
