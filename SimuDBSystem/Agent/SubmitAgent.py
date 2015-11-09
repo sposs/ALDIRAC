@@ -402,7 +402,7 @@ class SubmitAgent(AgentModule):
         job.setDestination(self.destination_sites[jobtype])
         #if self.submit_pools[jobtype]:
         job.setSubmitPool(self.submit_pools[jobtype])
-        job.setCPUTime(n_sub_jobs * self.cpu_times[jobtype])
+        job.setCPUTime(n_sub_jobs * int(self.cpu_times[jobtype]))
         if jobtype == "sewlab":
             outsb = ["*.log", "*.sample", "*.script"]
         else:

@@ -37,10 +37,10 @@ class RegisterOutput(ModuleBase):
     def execute(self):
         """ Execute the stuff
         """
-        if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
-            self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'],
-                                                                         self.stepStatus['OK']))
-            return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
+        # if not self.workflowStatus['OK'] or not self.stepStatus['OK']:
+        #     self.log.verbose('Workflow status = %s, step status = %s' % (self.workflowStatus['OK'],
+        #                                                                  self.stepStatus['OK']))
+        #     return S_OK('%s should not proceed as previous step did not end properly' % self.applicationName)
         
         result = self.resolveInputVariables()
         if not result['OK']:
@@ -54,6 +54,15 @@ class RegisterOutput(ModuleBase):
 #             if not res['OK']:
 #                 self.log.error("Failed to set status to failed:", res["Message"])
 #             return S_ERROR("Failed loading from pickle")
+        if not os.path.exists(self.InputFile[0]):
+            res = self.simudb.setStatus(self.taskname, "failed", "Cannot send results: Missing file")
+            if not res['OK']:
+                self.log.error("Failed to set status to failed:", res["Message"])
+                res = self.simudb.setStatus(self.taskname, "failed", "%s" % res["Message"])
+                if not res["OK"]:#try again
+                    self.log.error("Failed to set status to failed:", res["Message"])
+                    return S_ERROR("Failed setting final failed status")
+            return res
         os.rename(self.InputFile[0], self.taskname+".pkl")
         if self.debug:
             self.log.info("Would have attempted to send the results back")
